@@ -1,0 +1,62 @@
+@inherits LayoutComponentBase
+@inject ISettingService SettingService
+@inject NavigationManager NavigationManager
+
+<RadzenComponents />
+
+<RadzenTheme Theme="material" />
+
+<RadzenLayout Style="grid-template-areas: 'rz-sidebar rz-header' 'rz-sidebar rz-body'">
+    <RadzenHeader>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
+            <RadzenSidebarToggle Click="@(() => _sidebarExpanded = !_sidebarExpanded)" />
+            <RadzenText TextStyle="TextStyle.DisplayH5">
+                Welkom Standenprogramma
+            </RadzenText>
+        </RadzenStack>
+    </RadzenHeader>
+    <RadzenSidebar @bind-Expanded="_sidebarExpanded">
+        <RadzenStack>
+            <RadzenNumeric Min="2016"
+                           Max="@DateTime.Today.Year"
+                           TValue="int"
+                           Value="SettingService.Year"
+                           Change="HandleYearChanged"
+                           Placeholder="Jaar" />
+            <RadzenNumeric Format="0000"
+                           Placeholder="Vereniging"
+                           TValue="int"
+                           Value="SettingService.Club"
+                           Change="HandleClubChanged"
+                           ShowUpDown="false" />
+
+            <RadzenPanelMenu>
+                <RadzenPanelMenuItem Text="Leden" Path="/" Icon="manage_accounts" />
+                <RadzenPanelMenuItem Text="Vluchten" Path="/races" Icon="calendar_month" />
+                <RadzenPanelMenuItem Text="Tientjesduif" Path="/selectedyearpigeon" Icon="hotel_class" />
+                <RadzenPanelMenuItem Text="Knaakduif" Path="/selectedyoungpigeon" Icon="star" />
+                <RadzenPanelMenuItem Text="Ploegenspel" Path="/teams" Icon="groups" />
+                <RadzenPanelMenuItem Text="Divisiespel" Path="/leagues" Icon="format_list_numbered" />
+                <RadzenPanelMenuItem Text="Duivenwissel" Path="/pigeonswap" Icon="autorenew" />
+            </RadzenPanelMenu>
+        </RadzenStack>
+
+    </RadzenSidebar>
+    <RadzenBody>
+        @Body
+    </RadzenBody>
+</RadzenLayout>
+
+@code {
+    private bool _sidebarExpanded = true;
+
+    private async Task HandleClubChanged(int club)
+    {
+        await SettingService.SetClubAsync(club);
+    }
+
+    private async Task HandleYearChanged(int year)
+    {
+        await SettingService.SetYearAsync(year);
+    }
+}
