@@ -23,7 +23,7 @@
         Eredivisie
     </RadzenText>
     <RadzenDataGrid Data="_leagues.FirstLeagueOwners"
-                    IsLoading="@(_leagues is null)"
+                    IsLoading="_leagues is null"
                     EmptyText="Geen leden in deze divisie.">
         <Columns>
             <RadzenDataGridColumn TItem="LeagueOwner" Title="Lidnummer" Property="Owner.ID" />
@@ -46,8 +46,8 @@
     <RadzenText TextStyle="TextStyle.Subtitle1">
         Eerste Divisie
     </RadzenText>
-    <RadzenDataGrid Data="_leagues!.SecondLeagueOwners"
-                    IsLoading="@(_leagues is null)"
+    <RadzenDataGrid Data="_leagues.SecondLeagueOwners"
+                    IsLoading="_leagues is null"
                     EmptyText="Geen leden in deze divisie.">
         <Columns>
             <RadzenDataGridColumn TItem="LeagueOwner" Title="Lidnummer" Property="Owner.ID" />
@@ -57,10 +57,10 @@
                 <Template>
                     <RadzenButton ButtonStyle="ButtonStyle.Success"
                                   Icon="arrow_upward"
-                                  Click="@(() => _leagues!.Promote(context))" />
+                                  Click="@(() => _leagues.Promote(context))" />
                     <RadzenButton ButtonStyle="ButtonStyle.Danger"
                                   Icon="arrow_downward"
-                                  Click="@(() => _leagues!.Demote(context))" />
+                                  Click="@(() => _leagues.Demote(context))" />
                 </Template>
             </RadzenDataGridColumn>
         </Columns>
@@ -69,7 +69,7 @@
     <RadzenText TextStyle="TextStyle.Subtitle1">
         Tweede Divisie
     </RadzenText>
-    <RadzenDataGrid Data="_leagues!.ThirdLeagueOwners"
+    <RadzenDataGrid Data="_leagues.ThirdLeagueOwners"
                     IsLoading="@(_leagues is null)"
                     EmptyText="Geen leden in deze divisie.">
         <Columns>
@@ -80,10 +80,10 @@
                 <Template>
                     <RadzenButton ButtonStyle="ButtonStyle.Success"
                                   Icon="arrow_upward"
-                                  Click="@(() => _leagues!.Promote(context))" />
+                                  Click="@(() => _leagues.Promote(context))" />
                     <RadzenButton ButtonStyle="ButtonStyle.Danger"
                                   Icon="arrow_downward"
-                                  Click="@(() => _leagues!.Demote(context))"
+                                  Click="@(() => _leagues.Demote(context))"
                                   Disabled="true" />
                 </Template>
             </RadzenDataGridColumn>
@@ -97,8 +97,8 @@
     [CascadingParameter(Name = "Year")]
     public int Year { get; set; }
 
-    private Leagues _leagues = null!;
-    private IEnumerable<LeagueOwner> _allOwners = null!;
+    private Leagues _leagues = new([]);
+    private IEnumerable<LeagueOwner> _allOwners = [];
 
     protected override async Task OnParametersSetAsync()
     {

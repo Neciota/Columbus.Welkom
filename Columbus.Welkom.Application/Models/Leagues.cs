@@ -1,5 +1,4 @@
-﻿using Columbus.Models;
-using Columbus.Models.Owner;
+﻿using Columbus.Models.Owner;
 using System.Text.Json.Serialization;
 
 namespace Columbus.Welkom.Application.Models

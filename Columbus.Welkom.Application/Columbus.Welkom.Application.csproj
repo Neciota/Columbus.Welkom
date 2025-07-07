@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Columbus.Models" Version="0.2.0" />
-    <PackageReference Include="Columbus.UDP" Version="0.3.0" />
+    <PackageReference Include="Columbus.UDP" Version="0.3.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.16" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.16">
       <PrivateAssets>all</PrivateAssets>

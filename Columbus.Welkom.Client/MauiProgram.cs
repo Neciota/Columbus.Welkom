@@ -29,7 +29,7 @@ namespace Columbus.Welkom.Client
                 });
 
             string appFolder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "Columbus",
                 "Welkom");
 
@@ -57,6 +57,7 @@ namespace Columbus.Welkom.Client
             builder.Services.AddTransient<ISelectedYoungPigeonRepository, SelectedYoungPigeonRepository>();
 
             builder.Services.AddTransient<Application.Providers.IFileProvider, SystemFileProvider>();
+            builder.Services.AddTransient<Application.Providers.IFilePicker, FilePicker>();
 
             builder.Services.AddTransient<IOwnerSerializer, OwnerSerializer>();
             builder.Services.AddTransient<IPigeonSerializer, PigeonSerializer>();
@@ -77,7 +78,8 @@ namespace Columbus.Welkom.Client
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<DataContext>();
-                db.Database.EnsureCreated();
+                bool created = db.Database.EnsureCreated();
+                Console.WriteLine($"Database {(created ? "" : "not")} created.");
                 //db.Database.Migrate();
             }
 

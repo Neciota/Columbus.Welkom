@@ -1,6 +1,8 @@
 ﻿@page "/races"
 @using Columbus.Welkom.Application.Models
+@using Columbus.Welkom.Application.Providers
 @using Columbus.Welkom.Application.Services.Interfaces
+@inject IFilePicker FilePicker
 @inject IRaceService RaceService
 @inject NotificationService NotificationService
 
@@ -26,13 +28,9 @@
 
     <RadzenDataGrid Data="_races" IsLoading="_isLoading" EmptyText="Geen vluchten gevonden.">
         <Columns>
-            <RadzenDataGridColumn TItem="SimpleRace" Property="Code" Title="Code" />
-            <RadzenDataGridColumn TItem="SimpleRace" Property="Name" Title="Naam" />
-            <RadzenDataGridColumn TItem="SimpleRace" Title="Lostijd">
-                <Template Context="race">
-                    @race.StartTime.ToString("d-M-yyyy HH:mm:ss")
-                </Template>
-            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.Code)" Title="Code" />
+            <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.Name)" Title="Naam" />
+            <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.StartTime)" FormatString="{d-M-yyyy HH:mm:ss}" Title="Lostijd" />
             <RadzenDataGridColumn TItem="SimpleRace" Title="Lengtegraad">
                 <Template Context="race">
                     @Math.Round(race.Location.Longitude, 2)
@@ -43,16 +41,8 @@
                     @Math.Round(race.Location.Lattitude, 2)
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="SimpleRace" Title="Leden">
-                <Template Context="race">
-                    @race.OwnerCount
-                </Template>
-            </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="SimpleRace" Title="Duiven">
-                <Template Context="race">
-                    @race.PigeonCount
-                </Template>
-            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.OwnerCount)" Title="Leden" />
+            <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.PigeonCount)" Title="Duiven" />
             <RadzenDataGridColumn TItem="SimpleRace" Width="90px">
                 <Template Context="race">
                     <RadzenButton ButtonStyle="ButtonStyle.Info" Icon="info" Click="(() => _selectedRace = race)" />
@@ -107,7 +97,11 @@
 
         try
         {
-            Race newRace = await RaceService.ReadRaceFromFileAsync(string.Empty);
+            string? filePath = await FilePicker.PickFileAsync([".udp"]);
+            if (filePath is null)
+                return;
+
+            Race newRace = await RaceService.ReadRaceFromFileAsync(filePath);
 
             await RaceService.StoreRaceAsync(newRace);
             _races = await RaceService.GetAllRacesAsync();

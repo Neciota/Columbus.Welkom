@@ -9,11 +9,11 @@ namespace Columbus.Welkom.Application.Models.Entities
 
         public OwnerEntity(Owner owner)
         {
-            Id = owner.Id.Value;
             Name = owner.Name;
             Latitude = owner.LoftCoordinate.Lattitude;
             Longitude = owner.LoftCoordinate.Longitude;
             Club = owner.Club;
+            OwnerId = owner.Id;
         }
 
         public int Id { get; set; }

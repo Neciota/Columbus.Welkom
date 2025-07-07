@@ -1,7 +1,9 @@
 ﻿@page "/"
 @using Columbus.UDP.Interfaces;
+@using Columbus.Welkom.Application.Providers
 @using Columbus.Welkom.Application.Services.Interfaces
 @inject NotificationService NotificationService
+@inject IFilePicker FilePicker
 @inject IOwnerService OwnerService
 
 <RadzenStack AlignItems="AlignItems.Start" Orientation="Orientation.Vertical">
@@ -18,11 +20,11 @@
 
     <RadzenDataGrid Data="_owners" EmptyText="Geen leden gevonden." IsLoading="_isLoading">
         <Columns>
-            <RadzenDataGridColumn TItem="Owner" Title="Lidnummer" Property="ID" />
-            <RadzenDataGridColumn TItem="Owner" Title="Naam" Property="Name" />
+            <RadzenDataGridColumn TItem="Owner" Title="Lidnummer" Property="@nameof(Owner.Id)" />
+            <RadzenDataGridColumn TItem="Owner" Title="Naam" Property="@nameof(Owner.Name)" />
             <RadzenDataGridColumn TItem="Owner" Title="Duiven">
                 <Template>
-                    @context.Pigeons.Count()
+                    @context.Pigeons.Count
                 </Template>
             </RadzenDataGridColumn>
         </Columns>
@@ -53,7 +55,10 @@
         _isUploading = true;
         try
         {
-            _owners = await OwnerService.ReadOwnersFromFile(string.Empty);
+            string? filePath = await FilePicker.PickFileAsync([".udp"]);
+            if (filePath is null)
+                return;
+            _owners = await OwnerService.ReadOwnersFromFile(filePath);
         }
         catch (JSException)
         {
