@@ -53,7 +53,7 @@ namespace Columbus.Welkom.Application.Services
             IEnumerable<OwnerEntity> addedOwners = await _ownerRepository.AddRangeAsync(ownerEntities);
             Dictionary<OwnerId, OwnerEntity> addedOwnersByOwnerId = addedOwners.ToDictionary(ao => ao.OwnerId);
 
-            List<PigeonEntity> pigeonEntities = owners.SelectMany(o => o.Pigeons.Select(p => new PigeonEntity(p, addedOwnersByOwnerId[o.Id].Id)))
+            List<PigeonEntity> pigeonEntities = owners.SelectMany(o => o.Pigeons.Select(p => new PigeonEntity(p, addedOwnersByOwnerId[o.Id].OwnerId)))
                 .ToList();
             await _pigeonRepository.AddRangeAsync(pigeonEntities);
         }

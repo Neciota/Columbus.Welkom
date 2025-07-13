@@ -2,10 +2,9 @@
 {
     public class LeagueEntity : IEntity
     {
-        public int Id { get; set; }
-        public int OwnerId { get; set; }
-        public League League { get; set; }
+        public int Rank { get; set; }
+        public string Name { get; set; } = string.Empty;
 
-        public OwnerEntity? Owner { get; set; }
+        public ICollection<LeagueOwnerEntity> LeagueOwners { get; set; } = [];
     }
 }

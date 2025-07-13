@@ -1,7 +1,7 @@
 ﻿using Columbus.Models.Owner;
 using System.Text.Json.Serialization;
 
-namespace Columbus.Welkom.Application.Models
+namespace Columbus.Welkom.Application.Models.ViewModels
 {
     public class Leagues
     {
@@ -22,23 +22,18 @@ namespace Columbus.Welkom.Application.Models
             }
         }
 
-        [JsonIgnore]
-        public IEnumerable<LeagueOwner> FirstLeagueOwners => _participants.Where(p => p.League == League.First).OrderByDescending(p => p.Points);
+        public IEnumerable<LeagueOwner> GetLeagueOwnersByLeagueRank(int leagueRank) => _participants.Where(p => p.League.Rank == leagueRank).OrderByDescending(p => p.Points);
 
-        [JsonIgnore]
-        public IEnumerable<LeagueOwner> SecondLeagueOwners => _participants.Where(p => p.League == League.Second).OrderByDescending(p => p.Points);
-
-        [JsonIgnore]
-        public IEnumerable<LeagueOwner> ThirdLeagueOwners => _participants.Where(p => p.League == League.Third).OrderByDescending(p => p.Points);
+        public IEnumerable<League> GetLeagues() => _participants.Select(p => p.League).DistinctBy(l => l.Rank).OrderByDescending(l => l.Rank);
 
         public void Promote(LeagueOwner participant)
         {
-            participant.League--;
+            participant.League.Rank--;
         }
 
         public void Demote(LeagueOwner participant)
         {
-            participant.League++;
+            participant.League.Rank++;
         }
 
         private LeagueOwner GetLeagueOwner(Owner owner) => _participants.First(p => p.Owner.Id == owner.Id);

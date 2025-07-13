@@ -6,7 +6,8 @@ namespace Columbus.Welkom.Application.Repositories.Interfaces
 {
     public interface IPigeonSwapRepository : IBaseRepository<PigeonSwapEntity>
     {
-        Task<int> DeleteByYearAndPlayerAndPigeonAsync(int year, int playerId, CountryCode pigeonCountry, int pigeonYear, RingNumber pigeonRingNumber);
-        Task<IEnumerable<PigeonSwapEntity>> GetAllByYearAsync(int year);
+        Task<int> DeleteByPlayerAndPigeonAsync(OwnerId playerId, PigeonId pigeonId);
+        Task<IEnumerable<PigeonSwapEntity>> GetAllWithOwnersAndPigeonAsync();
+        Task<PigeonSwapEntity?> GetByIdAsync(int id);
     }
 }

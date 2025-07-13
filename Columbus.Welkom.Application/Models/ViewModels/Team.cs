@@ -1,7 +1,7 @@
 ﻿using Columbus.Models;
 using Columbus.Models.Owner;
 
-namespace Columbus.Welkom.Application.Models
+namespace Columbus.Welkom.Application.Models.ViewModels
 {
     public class Team
     {

@@ -1,5 +1,6 @@
 ﻿using Columbus.Models;
 using Columbus.Models.Race;
+using Columbus.Welkom.Application.Models.ViewModels;
 
 namespace Columbus.Welkom.Application.Models.Entities
 {
@@ -18,9 +19,8 @@ namespace Columbus.Welkom.Application.Models.Entities
             Longitude = race.Location.Longitude;
         }
 
-        public int Id { get; set; }
-        public int Number { get; set; }
         public string Code { get; set; } = string.Empty;
+        public int Number { get; set; }
         public string Name { get; set; } = string.Empty;
         public RaceType Type { get; set; }
         public DateTime StartTime { get; set; }
@@ -41,7 +41,7 @@ namespace Columbus.Welkom.Application.Models.Entities
             IList<OwnerRace> ownerRaces = PigeonRaces.Select(pr => pr.Pigeon!.Owner)
                 .Distinct()
                 .Cast<OwnerEntity>()
-                .Select(o => new OwnerRace(o.ToOwner(), startLocation, PigeonRaces.Count(pr => pr.Pigeon!.OwnerId == o.Id), TimeSpan.Zero))
+                .Select(o => new OwnerRace(o.ToOwner(), startLocation, PigeonRaces.Count(pr => pr.Pigeon!.OwnerId == o.OwnerId), TimeSpan.Zero))
                 .ToList();
 
             return new Race(

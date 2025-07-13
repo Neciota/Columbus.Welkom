@@ -2,13 +2,14 @@
 using Columbus.Models.Pigeon;
 using Columbus.Models.Race;
 using Columbus.Welkom.Application.Export;
-using Columbus.Welkom.Application.Models;
 using Columbus.Welkom.Application.Models.Entities;
+using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Providers;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
 using Columbus.Welkom.Application.Settings;
 using Microsoft.Extensions.Options;
+
 namespace Columbus.Welkom.Application.Services
 {
     public class PigeonSwapService : IPigeonSwapService
@@ -33,9 +34,9 @@ namespace Columbus.Welkom.Application.Services
             _racePointsSettings = racePointsSettings.Value;
         }
 
-        public async Task<IEnumerable<PigeonSwapPair>> GetPigeonSwapPairsByYearAsync(int year)
+        public async Task<IEnumerable<PigeonSwapPair>> GetPigeonSwapPairsAsync()
         {
-            IEnumerable<PigeonSwapEntity> pigeonSwapEntities = await _pigeonSwapRepository.GetAllByYearAsync(year);
+            IEnumerable<PigeonSwapEntity> pigeonSwapEntities = await _pigeonSwapRepository.GetAllWithOwnersAndPigeonAsync();
 
             IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync([RaceType.L]);
             IEnumerable<Race> races = raceEntities.Select(r => r.ToRace(_racePointsSettings.PointsQuotient, _racePointsSettings.MaxPoints, _racePointsSettings.MinPoints));
@@ -71,41 +72,36 @@ namespace Columbus.Welkom.Application.Services
             if (pigeonSwapPair.Player is null || pigeonSwapPair.Owner is null)
                 throw new ArgumentNullException("PigeonSwapPair Player, Owner, Pigeon, and CoupledOwner cannot be null.");
 
-            PigeonEntity pigeon = await _pigeonRepository.GetByCountryAndYearAndRingNumberAsync(pigeonSwapPair.Pigeon!.Country, pigeonSwapPair.Pigeon.Year, pigeonSwapPair.Pigeon.RingNumber);
+            PigeonEntity pigeon = await _pigeonRepository.GetByPigeonIdAsync(pigeonSwapPair.Pigeon.Id);
+            PigeonSwapEntity? pigeonSwapEntity = await _pigeonSwapRepository.GetByIdAsync(pigeonSwapPair.Id);
 
-            if (pigeonSwapPair.Id is null)
+            if (pigeonSwapPair.Id == 0)
             {
                 await _pigeonSwapRepository.AddAsync(new PigeonSwapEntity()
                 {
-                    Year = year,
-                    PlayerId = pigeonSwapPair.PlayerId,
-                    OwnerId = pigeonSwapPair.OwnerId,
+                    PlayerId = pigeonSwapPair.Player.Id,
+                    OwnerId = pigeonSwapPair.Owner.Id,
                     PigeonId = pigeon.Id,
-                    CoupledPlayerId = pigeonSwapPair.CoupledPlayerId
+                    CoupledPlayerId = pigeonSwapPair.CoupledPlayer.Id
                 });
             }
             else
             {
-                PigeonSwapEntity? pigeonSwapEntity = await _pigeonSwapRepository.GetByIdAsync(pigeonSwapPair.Id.Value);
-
                 if (pigeonSwapEntity is null)
                     throw new ArgumentException("No PigeonSwap entry by this id.");
 
                 pigeonSwapEntity.PigeonId = pigeon.Id;
-                pigeonSwapEntity.CoupledPlayerId = pigeonSwapPair.CoupledPlayerId;
+                pigeonSwapEntity.CoupledPlayerId = pigeonSwapPair.CoupledPlayer.Id;
                 await _pigeonSwapRepository.UpdateAsync(pigeonSwapEntity);
             }
         }
 
-        public async Task DeletePigeonSwapPairForYearAsync(int year, PigeonSwapPair pigeonSwapPair)
+        public async Task DeletePigeonSwapPairAsync(PigeonSwapPair pigeonSwapPair)
         {
-            if (pigeonSwapPair.Id is null)
-                return;
-
             if (pigeonSwapPair.Player is null || pigeonSwapPair.Pigeon is null)
                 throw new InvalidOperationException("PigeonSwapPair player and pigeon cannot be null");
 
-            await _pigeonSwapRepository.DeleteByYearAndPlayerAndPigeonAsync(year, pigeonSwapPair.PlayerId, pigeonSwapPair.Pigeon.Country, pigeonSwapPair.Pigeon.Year, pigeonSwapPair.Pigeon.RingNumber);
+            await _pigeonSwapRepository.DeleteByPlayerAndPigeonAsync(pigeonSwapPair.Player.Id, pigeonSwapPair.Pigeon.Id);
         }
 
         public async Task ExportToPdf(IEnumerable<PigeonSwapPair> pigeonSwapPairs)

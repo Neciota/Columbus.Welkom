@@ -10,6 +10,12 @@ namespace Columbus.Welkom.Application.Repositories
     {
         public OwnerRepository(DataContext context) : base(context) { }
 
+        public async Task<IEnumerable<OwnerEntity>> GetAllByOwnerIdsAsync(IEnumerable<OwnerId> ownerIds)
+        {
+            return await _context.Owners.Where(o => ownerIds.Contains(o.OwnerId))
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<OwnerEntity>> GetAllWithAllPigeonsAsync()
         {
             return await _context.Owners.Include(o => o.Pigeons)
@@ -23,7 +29,7 @@ namespace Columbus.Welkom.Application.Repositories
             if (!includeOwnersWithoutPigeons)
                 query = query.Where(o => o.Pigeons!.Any());
 
-            return await query.Include(o => o.Pigeons!.Where(p => p.Year == year))
+            return await query.Include(o => o.Pigeons!.Where(p => p.Id.Year == year))
                 .ToListAsync();
         }
 

@@ -1,5 +1,6 @@
 ﻿@page "/leagues"
 @using Columbus.Welkom.Application.Models
+@using Columbus.Welkom.Application.Models.ViewModels
 @using Columbus.Welkom.Application.Services.Interfaces
 @inject IOwnerService OwnerService
 @inject ILeaguesService LeagueService
@@ -19,76 +20,40 @@
         </Template>
     </RadzenDropDown>
 
-    <RadzenText TextStyle="TextStyle.Subtitle1">
-        Eredivisie
-    </RadzenText>
-    <RadzenDataGrid Data="_leagues.FirstLeagueOwners"
-                    IsLoading="_leagues is null"
-                    EmptyText="Geen leden in deze divisie.">
-        <Columns>
-            <RadzenDataGridColumn TItem="LeagueOwner" Title="Lidnummer" Property="Owner.ID" />
-            <RadzenDataGridColumn TItem="LeagueOwner" Title="Naam" Property="Owner.Name" />
-            <RadzenDataGridColumn TItem="LeagueOwner" Title="Punten" Property="Points" />
-            <RadzenDataGridColumn TItem="LeagueOwner" Title="" Width="100px">
-                <Template>
-                    <RadzenButton ButtonStyle="ButtonStyle.Success"
-                                  Icon="arrow_upward"
-                                  Click="@(() => _leagues!.Promote(context))"
-                                  Disabled="true" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                  Icon="arrow_downward"
-                                  Click="@(() => _leagues!.Demote(context))" />
-                </Template>
-            </RadzenDataGridColumn>
-        </Columns>
-    </RadzenDataGrid>
-
-    <RadzenText TextStyle="TextStyle.Subtitle1">
-        Eerste Divisie
-    </RadzenText>
-    <RadzenDataGrid Data="_leagues.SecondLeagueOwners"
-                    IsLoading="_leagues is null"
-                    EmptyText="Geen leden in deze divisie.">
-        <Columns>
-            <RadzenDataGridColumn TItem="LeagueOwner" Title="Lidnummer" Property="Owner.ID" />
-            <RadzenDataGridColumn TItem="LeagueOwner" Title="Naam" Property="Owner.Name" />
-            <RadzenDataGridColumn TItem="LeagueOwner" Title="Punten" Property="Points" />
-            <RadzenDataGridColumn TItem="LeagueOwner" Title="" Width="100px">
-                <Template>
-                    <RadzenButton ButtonStyle="ButtonStyle.Success"
-                                  Icon="arrow_upward"
-                                  Click="@(() => _leagues.Promote(context))" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                  Icon="arrow_downward"
-                                  Click="@(() => _leagues.Demote(context))" />
-                </Template>
-            </RadzenDataGridColumn>
-        </Columns>
-    </RadzenDataGrid>
-
-    <RadzenText TextStyle="TextStyle.Subtitle1">
-        Tweede Divisie
-    </RadzenText>
-    <RadzenDataGrid Data="_leagues.ThirdLeagueOwners"
-                    IsLoading="@(_leagues is null)"
-                    EmptyText="Geen leden in deze divisie.">
-        <Columns>
-            <RadzenDataGridColumn TItem="LeagueOwner" Title="Lidnummer" Property="Owner.ID" />
-            <RadzenDataGridColumn TItem="LeagueOwner" Title="Naam" Property="Owner.Name" />
-            <RadzenDataGridColumn TItem="LeagueOwner" Title="Punten" Property="Points" />
-            <RadzenDataGridColumn TItem="LeagueOwner" Title="" Width="100px">
-                <Template>
-                    <RadzenButton ButtonStyle="ButtonStyle.Success"
-                                  Icon="arrow_upward"
-                                  Click="@(() => _leagues.Promote(context))" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                  Icon="arrow_downward"
-                                  Click="@(() => _leagues.Demote(context))"
-                                  Disabled="true" />
-                </Template>
-            </RadzenDataGridColumn>
-        </Columns>
-    </RadzenDataGrid>
+    @foreach (League league in _leagues.GetLeagues())
+    {
+        <RadzenText TextStyle="TextStyle.Subtitle1">
+            @league.Name
+        </RadzenText>
+        <RadzenDataGrid Data="_leagues.GetLeagueOwnersByLeagueRank(league.Rank)"
+                        IsLoading="_leagues is null"
+                        EmptyText="Geen leden in deze divisie.">
+            <Columns>
+                <RadzenDataGridColumn TItem="LeagueOwner" Title="Lidnummer" Property="@nameof(LeagueOwner.Owner.Id)">
+                    <Template Context="leagueOwner">
+                        @leagueOwner.Owner.Id
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="LeagueOwner" Title="Naam" Property="@nameof(LeagueOwner.Owner.Name)">
+                    <Template Context="leagueOwner">
+                        @leagueOwner.Owner.Name
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="LeagueOwner" Title="Punten" Property="@nameof(LeagueOwner.Points)" />
+                <RadzenDataGridColumn TItem="LeagueOwner" Title="" Width="100px">
+                    <Template>
+                        <RadzenButton ButtonStyle="ButtonStyle.Success"
+                                      Icon="arrow_upward"
+                                      Click="@(() => _leagues!.Promote(context))"
+                                      Disabled="true" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                      Icon="arrow_downward"
+                                      Click="@(() => _leagues!.Demote(context))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
 </RadzenStack>
 
 @code {

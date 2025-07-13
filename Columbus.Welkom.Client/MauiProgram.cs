@@ -29,7 +29,7 @@ namespace Columbus.Welkom.Client
                 });
 
             string appFolder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "Columbus",
                 "Welkom");
 
@@ -79,7 +79,6 @@ namespace Columbus.Welkom.Client
             {
                 var db = scope.ServiceProvider.GetRequiredService<DataContext>();
                 bool created = db.Database.EnsureCreated();
-                Console.WriteLine($"Database {(created ? "" : "not")} created.");
                 //db.Database.Migrate();
             }
 

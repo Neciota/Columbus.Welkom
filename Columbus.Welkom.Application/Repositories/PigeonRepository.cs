@@ -10,27 +10,16 @@ namespace Columbus.Welkom.Application.Repositories
     {
         public PigeonRepository(DataContext context) : base(context) { }
 
-        public async Task<PigeonEntity> GetByCountryAndYearAndRingNumberAsync(CountryCode country, int year, RingNumber ringNumber)
+        public async Task<PigeonEntity> GetByPigeonIdAsync(PigeonId pigeonId)
         {
-            return await _context.Pigeons.Where(p => p.Country == country)
-                .Where(p => p.Year == year)
-                .Where(p => p.RingNumber == ringNumber)
+            return await _context.Pigeons.Where(p => p.Id == pigeonId)
                 .FirstAsync();
         }
 
-        public async Task<IEnumerable<PigeonEntity>> GetPigeonsByCountriesAndYearsAndRingNumbersAsync(IEnumerable<Pigeon> pigeons)
+        public async Task<IEnumerable<PigeonEntity>> GetByPigeonIdsAsync(IEnumerable<PigeonId> pigeonIds)
         {
-            IEnumerable<CountryCode> countries = pigeons.Select(p => p.Country).Distinct();
-            IEnumerable<int> years = pigeons.Select(p => p.Year).Distinct();
-            IEnumerable<RingNumber> ringNumbers = pigeons.Select(p => p.RingNumber).Distinct();
-
-            IEnumerable<PigeonEntity> result = await _context.Pigeons
-                .Where(p => countries.Contains(p.Country))
-                .Where(p => years.Contains(p.Year))
-                .Where(p => ringNumbers.Contains(p.RingNumber))
+            return await _context.Pigeons.Where(p => pigeonIds.Contains(p.Id))
                 .ToListAsync();
-
-            return result.Where(pe => pigeons.Any(p => p.Country == pe.Country && p.Year == pe.Year && p.RingNumber == pe.RingNumber));
         }
     }
 }

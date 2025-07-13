@@ -1,36 +1,49 @@
-﻿using Columbus.Models.Pigeon;
+﻿using Columbus.Models.Owner;
+using Columbus.Models.Pigeon;
 
 namespace Columbus.Welkom.Application.Models.Entities
 {
     public class PigeonEntity : IEntity
     {
+        private CountryCode _countryCode;
+        private int _year;
+        private RingNumber _ringNumber;
+
         public PigeonEntity() { }
 
-        public PigeonEntity(Pigeon pigeon, int ownerId)
+        public PigeonEntity(Pigeon pigeon, OwnerId ownerId)
         {
-            Year = pigeon.Year;
-            Country = pigeon.Country;
-            RingNumber = pigeon.RingNumber;
+            Id = pigeon.Id;
             Chip = pigeon.Chip;
             Sex = pigeon.Sex;
             OwnerId = ownerId;
         }
 
-        public int Id { get; set; }
-        public int Year { get; set; }
-        public CountryCode Country { get; set; }
-        public RingNumber RingNumber { get; set; }
+        public PigeonId Id
+        {
+            get => PigeonId.Create(_countryCode, _year, _ringNumber);
+            set
+            {
+                _countryCode = value.CountryCode;
+                _year = value.Year;
+                _ringNumber = value.RingNumber;
+            }
+        }
         public int Chip { get; set; }
         public Sex Sex { get; set; }
-        public int OwnerId { get; set; }
+        public OwnerId OwnerId { get; set; }
 
         public OwnerEntity? Owner { get; set; }
         public ICollection<PigeonRaceEntity>? PigeonRaces { get; set; }
+        public SelectedYearPigeonEntity? SelectedYearPigeonEntity { get; set; }
+        public SelectedYoungPigeonEntity? SelectedYoungPigeonEntity { get; set; }
+        public PigeonSaleEntity? PigeonSale { get; set; }
+        public ICollection<PigeonSwapEntity> PigeonSwaps { get; set; } = [];
 
-        public Pigeon ToPigeon() => new Pigeon(Country, Year, RingNumber, Chip, Sex);
+        public Pigeon ToPigeon() => new Pigeon(Id, Chip, Sex);
 
         public override bool Equals(object? obj) => obj is PigeonEntity pigeon && Equals(pigeon);
-        public bool Equals(Pigeon pigeon) => pigeon.Country == Country && pigeon.Year == Year && pigeon.RingNumber == RingNumber;
+        public bool Equals(Pigeon pigeon) => Id == pigeon.Id;
 
         /// <summary>
         /// Overriden to only include country, year, and ringnumber.
@@ -40,11 +53,7 @@ namespace Columbus.Welkom.Application.Models.Entities
         public override int GetHashCode()
         {
             HashCode hashCode = new HashCode();
-
-            hashCode.Add(Country);
-            hashCode.Add(Year);
-            hashCode.Add(RingNumber);
-
+            hashCode.Add(Id);
             return hashCode.ToHashCode();
         }
     }

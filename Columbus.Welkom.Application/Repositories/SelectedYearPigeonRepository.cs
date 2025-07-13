@@ -11,7 +11,7 @@ namespace Columbus.Welkom.Application.Repositories
     {
         public SelectedYearPigeonRepository(DataContext context): base(context) { }
 
-        public async Task<int> DeleteByOwnerAsync(int ownerId)
+        public async Task<int> DeleteByOwnerAsync(OwnerId ownerId)
         {
             return await _context.SelectedYearPigeons.Where(syp => syp.OwnerId == ownerId)
                 .ExecuteDeleteAsync();
@@ -24,16 +24,14 @@ namespace Columbus.Welkom.Application.Repositories
                 .ToListAsync();
         }
 
-        public async Task<SelectedYearPigeonEntity?> GetByOwnerAsync(int ownerId)
+        public async Task<SelectedYearPigeonEntity?> GetByOwnerAsync(OwnerId ownerId)
         {
             return await _context.SelectedYearPigeons.FirstOrDefaultAsync(syp => syp.OwnerId == ownerId);
         }
 
-        public async Task<SelectedYearPigeonEntity?> GetByPigeonAsync(int pigeonYear, CountryCode pigeonCountry, RingNumber pigeonRingNumber)
+        public async Task<SelectedYearPigeonEntity?> GetByPigeonIdAsync(PigeonId pigeonId)
         {
-            return await _context.SelectedYearPigeons.Where(syp => syp.Pigeon!.Year == pigeonYear)
-                .Where(syp => syp.Pigeon!.Country == pigeonCountry)
-                .Where(syp => syp.Pigeon!.RingNumber == pigeonRingNumber)
+            return await _context.SelectedYearPigeons.Where(syp => syp.PigeonId == pigeonId)
                 .Include(syp => syp.Pigeon)
                 .Include(syp => syp.Owner)
                 .FirstOrDefaultAsync();

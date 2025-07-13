@@ -1,4 +1,4 @@
-﻿using Columbus.Welkom.Application.Models;
+﻿using Columbus.Welkom.Application.Models.ViewModels;
 using System.Text;
 
 namespace Columbus.Welkom.Application.Export

@@ -1,31 +1,33 @@
 ﻿using Columbus.Models.Owner;
+using Columbus.Models.Pigeon;
 using Columbus.Models.Race;
 
 namespace Columbus.Welkom.Application.Models.Entities
 {
-    public class PigeonRaceEntity : IEntity
+    public class PigeonRaceEntity() : IEntity
     {
-        public PigeonRaceEntity() { }
+        private CountryCode _countryCode;
+        private int _year;
+        private RingNumber _ringNumber;
 
-        public PigeonRaceEntity(PigeonRace pigeonRace, PigeonEntity pigeon, RaceEntity race)
+        public PigeonRaceEntity(PigeonRace pigeonRace, string raceCode) : this()
         {
-            Pigeon = pigeon;
-            Race = race;
+            PigeonId = pigeonRace.Pigeon.Id;
+            RaceCode = raceCode;
             Mark = pigeonRace.Mark;
             ArrivalTime = pigeonRace.ArrivalTime;
         }
 
-        public PigeonRaceEntity(PigeonRace pigeonRace, int pigeonId, int raceId)
+        public string RaceCode { get; set; } = string.Empty;
+        public PigeonId PigeonId
         {
-            PigeonId = pigeonId;
-            RaceId = raceId;
-            Mark = pigeonRace.Mark;
-            ArrivalTime = pigeonRace.ArrivalTime;
+            get => PigeonId.Create(_countryCode, _year, _ringNumber);
+            set {
+                _countryCode = value.CountryCode;
+                _year = value.Year;
+                _ringNumber = value.RingNumber;
+            }
         }
-
-        public int Id { get; set; }
-        public int PigeonId { get; set; }
-        public int RaceId { get; set; }
         public int Mark { get; set; }
         public DateTime? ArrivalTime { get; set; }
 

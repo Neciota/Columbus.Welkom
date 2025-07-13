@@ -14,19 +14,6 @@ namespace Columbus.Welkom.Application.Repositories
             _context = context;
         }
 
-        public virtual async Task<T?> GetByIdAsync(int id)
-        {
-            return await _context.Set<T>()
-                .FirstOrDefaultAsync(e => e.Id == id);
-        }
-
-        public virtual async Task<IEnumerable<T>> GetAllByIdsAsync(IEnumerable<int> ids)
-        {
-            return await _context.Set<T>()
-               .Where(e => ids.Contains(e.Id))
-               .ToListAsync();
-        }
-
         public virtual async Task<IEnumerable<T>> GetAllAsync()
         {
             return await _context.Set<T>().ToListAsync();
@@ -64,28 +51,12 @@ namespace Columbus.Welkom.Application.Repositories
             return count == 1;
         }
 
-        public virtual async Task<bool> DeleteAsync(int id)
-        {
-            int count = await _context.Set<T>().Where(e => e.Id == id)
-                .ExecuteDeleteAsync();
-
-            return count == 1;
-        }
-
         public virtual async Task<bool> DeleteRangeAsync(IEnumerable<T> entities)
         {
             _context.RemoveRange(entities);
             int count = await _context.SaveChangesAsync();
 
             return count == entities.Count();
-        }
-
-        public virtual async Task<bool> DeleteRangeAsync(IEnumerable<int> ids)
-        {
-            int count = await _context.Set<T>().Where(e => ids.Contains(e.Id))
-                .ExecuteDeleteAsync();
-
-            return count == ids.Count();
         }
     }
 }

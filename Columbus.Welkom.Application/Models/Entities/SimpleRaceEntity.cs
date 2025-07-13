@@ -1,5 +1,6 @@
 ﻿using Columbus.Models;
 using Columbus.Models.Race;
+using Columbus.Welkom.Application.Models.ViewModels;
 
 namespace Columbus.Welkom.Application.Models.Entities
 {

@@ -1,12 +1,12 @@
-﻿using Columbus.Welkom.Application.Models;
+﻿using Columbus.Welkom.Application.Models.ViewModels;
 
 namespace Columbus.Welkom.Application.Services.Interfaces
 {
     public interface IPigeonSwapService
     {
-        Task DeletePigeonSwapPairForYearAsync(int year, PigeonSwapPair pigeonSwapPair);
+        Task DeletePigeonSwapPairAsync(PigeonSwapPair pigeonSwapPair);
         Task ExportToPdf(IEnumerable<PigeonSwapPair> pigeonSwapPairs);
-        Task<IEnumerable<PigeonSwapPair>> GetPigeonSwapPairsByYearAsync(int year);
+        Task<IEnumerable<PigeonSwapPair>> GetPigeonSwapPairsAsync();
         Task UpdatePigeonSwapPairAsync(int year, PigeonSwapPair pigeonSwapPair);
     }
 }

@@ -1,8 +1,8 @@
 ﻿using Columbus.Models;
 using Columbus.Models.Pigeon;
 using Columbus.Models.Race;
-using Columbus.Welkom.Application.Models;
 using Columbus.Welkom.Application.Models.Entities;
+using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
 using Columbus.Welkom.Application.Settings;
@@ -60,16 +60,16 @@ namespace Columbus.Welkom.Application.Services
             if (ownerPigeonPair.Owner is null)
                 return;
 
-            SelectedYoungPigeonEntity? selectedYearPigeonEntity = await _selectedYoungPigeonRepository.GetByOwnerAsync(ownerPigeonPair.OwnerId);
+            SelectedYoungPigeonEntity? selectedYearPigeonEntity = await _selectedYoungPigeonRepository.GetByOwnerAsync(ownerPigeonPair.Owner.Id);
 
-            PigeonEntity pigeon = await _pigeonRepository.GetByCountryAndYearAndRingNumberAsync(ownerPigeonPair.Pigeon!.Country, ownerPigeonPair.Pigeon.Year, ownerPigeonPair.Pigeon.RingNumber);
+            PigeonEntity pigeon = await _pigeonRepository.GetByPigeonIdAsync(ownerPigeonPair.Pigeon.Id);
 
             if (selectedYearPigeonEntity is null)
             {
                 await _selectedYoungPigeonRepository.AddAsync(new SelectedYoungPigeonEntity()
                 {
-                    OwnerId = ownerPigeonPair.OwnerId,
-                    PigeonId = pigeon.Id
+                    OwnerId = ownerPigeonPair.Owner.Id,
+                    PigeonId = ownerPigeonPair.Pigeon.Id,
                 });
             }
             else
@@ -81,12 +81,12 @@ namespace Columbus.Welkom.Application.Services
 
         public async Task DeleteOwnerPigeonPairForYearAsync(int year, Pigeon pigeon)
         {
-            SelectedYoungPigeonEntity? oldPair = await _selectedYoungPigeonRepository.GetByPigeonAsync(pigeon.Year, pigeon.Country, pigeon.RingNumber);
+            SelectedYoungPigeonEntity? oldPair = await _selectedYoungPigeonRepository.GetByPigeonIdAsync(pigeon.Id);
 
             if (oldPair is null)
                 throw new InvalidOperationException("No pair with this pigeon present.");
 
-            await _selectedYoungPigeonRepository.DeleteByOwnerAsync(oldPair.Owner!.Id);
+            await _selectedYoungPigeonRepository.DeleteByOwnerAsync(oldPair.Owner.OwnerId);
         }
 
         public async Task DeleteOwnerPigeonPairForYearAsync(int year, OwnerPigeonPair ownerPigeonPair)
@@ -94,7 +94,7 @@ namespace Columbus.Welkom.Application.Services
             if (ownerPigeonPair.Owner is null)
                 throw new InvalidOperationException("Owner cannot be null");
 
-            await _selectedYoungPigeonRepository.DeleteByOwnerAsync(ownerPigeonPair.OwnerId);
+            await _selectedYoungPigeonRepository.DeleteByOwnerAsync(ownerPigeonPair.Owner.Id);
         }
     }
 }

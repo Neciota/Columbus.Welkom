@@ -1,7 +1,7 @@
 ﻿using Columbus.Models.Owner;
 using Columbus.Models.Pigeon;
 
-namespace Columbus.Welkom.Application.Models
+namespace Columbus.Welkom.Application.Models.ViewModels
 {
     public class OwnerPigeonPair
     {
@@ -23,10 +23,8 @@ namespace Columbus.Welkom.Application.Models
             Points = points;
         }
 
-        public int OwnerId { get; set; }
-        public Owner? Owner { get; set; }
-        public int PigeonId { get; set; }
-        public Pigeon? Pigeon { get; set; }
+        public Owner Owner { get; set; }
+        public Pigeon Pigeon { get; set; }
         public int Points { get; set; }
 
         public void ResetOnOwnerChange()

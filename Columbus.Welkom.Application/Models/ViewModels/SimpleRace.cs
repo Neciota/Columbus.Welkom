@@ -1,7 +1,7 @@
 ﻿using Columbus.Models;
 using Columbus.Models.Race;
 
-namespace Columbus.Welkom.Application.Models
+namespace Columbus.Welkom.Application.Models.ViewModels
 {
     public class SimpleRace
     {

@@ -2,8 +2,8 @@
 using Columbus.Models.Pigeon;
 using Columbus.Models.Race;
 using Columbus.UDP.Interfaces;
-using Columbus.Welkom.Application.Models;
 using Columbus.Welkom.Application.Models.Entities;
+using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Providers;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
@@ -83,7 +83,7 @@ namespace Columbus.Welkom.Application.Services
 
             IEnumerable<Pigeon> pigeonData = races.SelectMany(r => r.PigeonRaces)
                 .Select(pr => pr.Pigeon);
-            IEnumerable<PigeonEntity> pigeonsInRaces = await _pigeonRepository.GetPigeonsByCountriesAndYearsAndRingNumbersAsync(pigeonData);
+            IEnumerable<PigeonEntity> pigeonsInRaces = await _pigeonRepository.GetByPigeonIdsAsync(pigeonData.Select(p => p.Id));
 
             await _raceRepository.AddRangeAsync(races.Select(r => new RaceEntity(r)));
         }
@@ -100,28 +100,28 @@ namespace Columbus.Welkom.Application.Services
 
             RaceEntity addedRace = await _raceRepository.AddAsync(new RaceEntity(race));
 
-            IEnumerable<PigeonRaceEntity> pigeonRacesToAdd = GetPigeonRaceEntities(race.PigeonRaces, allPigeonsInRace, addedRace.Id);
+            IEnumerable<PigeonRaceEntity> pigeonRacesToAdd = GetPigeonRaceEntities(race.PigeonRaces, allPigeonsInRace, addedRace.Code);
 
             await _pigeonRaceRepository.AddRangeAsync(pigeonRacesToAdd);
         }
 
         private async Task<IEnumerable<OwnerEntity>> AddMissingOwners(IEnumerable<Owner> owners)
         {
-            IEnumerable<OwnerEntity> existingOwners = await _ownerRepository.GetAllByIdsAsync(owners.Select(o => o.Id.Value));
-            HashSet<int> ownerIds = existingOwners.Select(o => o.Id).ToHashSet();
+            IEnumerable<OwnerEntity> existingOwners = await _ownerRepository.GetAllByOwnerIdsAsync(owners.Select(o => o.Id));
+            HashSet<OwnerId> ownerIds = existingOwners.Select(o => o.OwnerId).ToHashSet();
 
-            IEnumerable<Owner> ownersToAdd = owners.Where(o => !ownerIds.Contains(o.Id.Value));
+            IEnumerable<Owner> ownersToAdd = owners.Where(o => !ownerIds.Contains(o.Id));
 
             IEnumerable<OwnerEntity> addedOwners = await _ownerRepository.AddRangeAsync(ownersToAdd.Select(o => new OwnerEntity(o)));
 
-            return await _ownerRepository.GetAllByIdsAsync(owners.Select(o => o.Id.Value));
+            return await _ownerRepository.GetAllByOwnerIdsAsync(owners.Select(o => o.Id));
         }
 
         private async Task<IEnumerable<PigeonEntity>> AddMissingPigeons(IEnumerable<Owner> owners)
         {
             IEnumerable<OwnerEntity> existingOwners = await _ownerRepository.GetByOwnerIdsAsync(owners.Select(o => o.Id));
             IEnumerable<Pigeon> pigeons = owners.SelectMany(o => o.Pigeons);
-            IEnumerable<PigeonEntity> existingPigeons = await _pigeonRepository.GetPigeonsByCountriesAndYearsAndRingNumbersAsync(pigeons);
+            IEnumerable<PigeonEntity> existingPigeons = await _pigeonRepository.GetByPigeonIdsAsync(pigeons.Select(p => p.Id));
 
             HashSet<int> existingPigeonsHashSet = existingPigeons.Select(p => p.GetHashCode()).ToHashSet();
             Dictionary<OwnerId, OwnerEntity> ownersByOwnerId = existingOwners.ToDictionary(eo => eo.OwnerId);
@@ -134,16 +134,16 @@ namespace Columbus.Welkom.Application.Services
                     if (existingPigeonsHashSet.Contains(pigeon.GetHashCode()))
                         continue;
 
-                    pigeonsToAdd.Add(new PigeonEntity(pigeon, ownersByOwnerId[owner.Id].Id));
+                    pigeonsToAdd.Add(new PigeonEntity(pigeon, ownersByOwnerId[owner.Id].OwnerId));
                 }
             }
 
             await _pigeonRepository.AddRangeAsync(pigeonsToAdd);
 
-            return await _pigeonRepository.GetPigeonsByCountriesAndYearsAndRingNumbersAsync(pigeons);
+            return await _pigeonRepository.GetByPigeonIdsAsync(pigeons.Select(p => p.Id));
         }
 
-        private static IEnumerable<PigeonRaceEntity> GetPigeonRaceEntities(IList<PigeonRace> pigeonRaces, IEnumerable<PigeonEntity> pigeonEntities, int raceId)
+        private static IEnumerable<PigeonRaceEntity> GetPigeonRaceEntities(IList<PigeonRace> pigeonRaces, IEnumerable<PigeonEntity> pigeonEntities, string raceCode)
         {
             Dictionary<int, PigeonEntity> pigeonEntitiesSet = pigeonEntities.ToDictionary(p => p.GetHashCode(), p => p);
 
@@ -153,7 +153,7 @@ namespace Columbus.Welkom.Application.Services
                 bool found = pigeonEntitiesSet.TryGetValue(pr.Pigeon.GetHashCode(), out PigeonEntity? pigeonEntity);
                 if (!found)
                     throw new ArgumentException($"Given pigeon list did not contain pigeon {pr.Pigeon}");
-                pigeonRaceEntities.Add(new PigeonRaceEntity(pr, pigeonEntity!.Id, raceId));
+                pigeonRaceEntities.Add(new PigeonRaceEntity(pr, raceCode));
             }
 
             return pigeonRaceEntities;
@@ -168,10 +168,7 @@ namespace Columbus.Welkom.Application.Services
 
         public async Task DeleteRaceByCodeAsync(string code)
         {
-            RaceEntity race = await _raceRepository.GetByCodeAsync(code);
-
-            await _pigeonRaceRepository.DeleteAllByRaceId(race.Id);
-
+            await _pigeonRaceRepository.DeleteAllByRaceCodeAsync(code);
             await _raceRepository.DeleteRaceByCodeAsync(code);
         }
     }

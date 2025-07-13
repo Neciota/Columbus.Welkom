@@ -1,5 +1,6 @@
 ﻿@page "/selectedyearpigeon"
 @using Columbus.Welkom.Application.Models
+@using Columbus.Welkom.Application.Models.ViewModels
 @using Columbus.Welkom.Application.Services.Interfaces
 @inject IOwnerService OwnerService
 @inject ISelectedYearPigeonService SelectedYearPigeonService
@@ -83,8 +84,7 @@
         if (owner is null)
             return Enumerable.Empty<Pigeon>();
 
-        return owner.Pigeons.OrderBy(p => p.Year)
-            .ThenBy(p => p.RingNumber);
+        return owner.Pigeons.OrderBy(o => o.Id);
     }
 
     private async Task HandleOwnerChange(OwnerPigeonPair ownerPigeonPair)

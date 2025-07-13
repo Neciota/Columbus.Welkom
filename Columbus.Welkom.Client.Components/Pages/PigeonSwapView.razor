@@ -1,5 +1,6 @@
 ﻿@page "/pigeonswap"
 @using Columbus.Welkom.Application.Models
+@using Columbus.Welkom.Application.Models.ViewModels
 @using Columbus.Welkom.Application.Services.Interfaces
 @inject IOwnerService OwnerService
 @inject IPigeonSwapService PigeonSwapService
@@ -130,7 +131,7 @@
 
         _isLoading = true;
         _allOwners = await OwnerService.GetOwnersWithYearPigeonsAsync(Year, true);
-        _pigeonSwapPairs = await PigeonSwapService.GetPigeonSwapPairsByYearAsync(Year);
+        _pigeonSwapPairs = await PigeonSwapService.GetPigeonSwapPairsAsync();
         _races = await RaceService.GetAllRacesByTypeAsync(RaceType.L);
 
         foreach (PigeonSwapPair pigeonSwapPair in _pigeonSwapPairs)
@@ -144,9 +145,7 @@
         if (owner is null)
             return new List<Pigeon>();
 
-        return owner.Pigeons.OrderBy(p => p.Country)
-            .ThenBy(p => p.Year)
-            .ThenBy(p => p.RingNumber);
+        return owner.Pigeons.OrderBy(p => p.Id);
     }
 
     private async Task EditRow(PigeonSwapPair pigeonSwapPair)
@@ -157,7 +156,7 @@
 
     private async Task HandlePlayerChange(PigeonSwapPair pigeonSwapPair)
     {
-        await PigeonSwapService.DeletePigeonSwapPairForYearAsync(Year, pigeonSwapPair);
+        await PigeonSwapService.DeletePigeonSwapPairAsync(pigeonSwapPair);
         pigeonSwapPair.Owner = pigeonSwapPair.Player;
     }
 
@@ -167,7 +166,7 @@
             return;
 
         await PigeonSwapService.UpdatePigeonSwapPairAsync(Year, pigeonSwapPair);
-        _pigeonSwapPairs = await PigeonSwapService.GetPigeonSwapPairsByYearAsync(Year);
+        _pigeonSwapPairs = await PigeonSwapService.GetPigeonSwapPairsAsync();
     }
 
     private async Task HandleCoupledPlayerChange(PigeonSwapPair pigeonSwapPair)
@@ -176,12 +175,12 @@
             return;
 
         await PigeonSwapService.UpdatePigeonSwapPairAsync(Year, pigeonSwapPair);
-        _pigeonSwapPairs = await PigeonSwapService.GetPigeonSwapPairsByYearAsync(Year);
+        _pigeonSwapPairs = await PigeonSwapService.GetPigeonSwapPairsAsync();
     }
 
     private async Task DeletePigeonSwapPair(PigeonSwapPair pigeonSwapPair)
     {
-        await PigeonSwapService.DeletePigeonSwapPairForYearAsync(Year, pigeonSwapPair);
+        await PigeonSwapService.DeletePigeonSwapPairAsync(pigeonSwapPair);
         _pigeonSwapPairs = _pigeonSwapPairs.Where(pair => pair != pigeonSwapPair);
     }
 
