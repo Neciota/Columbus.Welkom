@@ -374,6 +374,8 @@ namespace Columbus.Welkom.Application.Migrations
 
                     b.HasKey("Code");
 
+                    b.HasIndex("Number");
+
                     b.HasIndex("Type");
 
                     b.ToTable("race", (string)null);

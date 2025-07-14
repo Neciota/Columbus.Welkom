@@ -14,6 +14,8 @@ public class RaceEntityConfiguration : IEntityTypeConfiguration<RaceEntity>
 
         builder.HasIndex(e => e.Type);
 
+        builder.HasIndex(e => e.Number);
+
         builder.Property(e => e.Code)
             .HasColumnName("code");
 

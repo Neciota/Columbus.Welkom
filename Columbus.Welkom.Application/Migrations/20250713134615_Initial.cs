@@ -376,6 +376,11 @@ namespace Columbus.Welkom.Application.Migrations
                 column: "player_id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_race_number",
+                table: "race",
+                column: "number");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_race_type",
                 table: "race",
                 column: "type");

@@ -31,6 +31,6 @@ namespace Columbus.Welkom.Application.Models.Entities
         public ICollection<PigeonSwapEntity> OwnedSwappedPigeons { get; set; } = [];
         public ICollection<PigeonSwapEntity> CoupledSwappedPigeons { get; set; } = [];
 
-        public Owner ToOwner() => new(OwnerId, Name, new Coordinate(Longitude, Latitude), Club);
+        public Owner ToOwner() => new(OwnerId, Name, new Coordinate(Longitude, Latitude), Club, Pigeons.Select(p => p.ToPigeon()).ToList());
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Columbus.Models;
+using Columbus.Models.Owner;
 using Columbus.Models.Race;
 using Columbus.Welkom.Application.Models.ViewModels;
 
@@ -38,21 +39,27 @@ namespace Columbus.Welkom.Application.Models.Entities
 
             Coordinate startLocation = new Coordinate(Longitude, Latitude);
 
-            IList<OwnerRace> ownerRaces = PigeonRaces.Select(pr => pr.Pigeon!.Owner)
+            Dictionary<OwnerId, OwnerRace> ownerRaces = PigeonRaces.Select(pr => pr.Pigeon!.Owner)
                 .Distinct()
                 .Cast<OwnerEntity>()
                 .Select(o => new OwnerRace(o.ToOwner(), startLocation, PigeonRaces.Count(pr => pr.Pigeon!.OwnerId == o.OwnerId), TimeSpan.Zero))
+                .ToDictionary(or => or.Owner.Id);
+            IList<PigeonRace> pigeonRaces = PigeonRaces.Select(pr => pr.ToPigeonRace(pr.Pigeon!.Owner!.OwnerId))
+                .OrderByDescending(pr => pr.GetSpeed(ownerRaces[pr.OwnerId].Distance, StartTime, ownerRaces[pr.OwnerId].ClockDeviation))
                 .ToList();
 
+            var sample = pigeonRaces.First();
+            var speed = sample.GetSpeed(ownerRaces[sample.OwnerId].Distance, StartTime, ownerRaces[sample.OwnerId].ClockDeviation);
+
             return new Race(
-                Number, 
-                Type, 
-                Name, 
-                Code, 
-                StartTime, 
-                startLocation, 
-                ownerRaces, 
-                PigeonRaces.Select(pr => pr.ToPigeonRace(pr.Pigeon!.Owner!.OwnerId)).ToList(),
+                Number,
+                Type,
+                Name,
+                Code,
+                StartTime,
+                startLocation,
+                ownerRaces.Values.ToList(),
+                pigeonRaces,
                 pointsQuotient,
                 maxPoints,
                 minPoints);

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Columbus.Welkom.Application.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250713093644_Initial")]
+    [Migration("20250713134615_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -376,6 +376,8 @@ namespace Columbus.Welkom.Application.Migrations
                         .HasColumnName("type");
 
                     b.HasKey("Code");
+
+                    b.HasIndex("Number");
 
                     b.HasIndex("Type");
 

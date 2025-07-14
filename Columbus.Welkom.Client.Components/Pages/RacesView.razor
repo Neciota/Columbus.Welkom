@@ -5,6 +5,7 @@
 @using Columbus.Welkom.Application.Services.Interfaces
 @inject IFilePicker FilePicker
 @inject IRaceService RaceService
+@inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 
 <RadzenStack AlignItems="AlignItems.Start" Orientation="Orientation.Vertical" Visible="_selectedRace is null">
@@ -31,7 +32,7 @@
         <Columns>
             <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.Code)" Title="Code" />
             <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.Name)" Title="Naam" />
-            <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.StartTime)" FormatString="{d-M-yyyy HH:mm:ss}" Title="Lostijd" />
+            <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.StartTime)" FormatString="{0:d-M-yyyy HH:mm:ss}" Title="Lostijd" />
             <RadzenDataGridColumn TItem="SimpleRace" Title="Lengtegraad">
                 <Template Context="race">
                     @Math.Round(race.Location.Longitude, 2)
@@ -44,17 +45,15 @@
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.OwnerCount)" Title="Leden" />
             <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.PigeonCount)" Title="Duiven" />
-            <RadzenDataGridColumn TItem="SimpleRace" Width="90px">
+            <RadzenDataGridColumn TItem="SimpleRace" Width="100px">
                 <Template Context="race">
-                    <RadzenButton ButtonStyle="ButtonStyle.Info" Icon="info" Click="(() => _selectedRace = race)" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Info" Icon="info" Click="(() => GoToRace(race.Code))" />
                     <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Click="(() => DeleteRace(race))" />
                 </Template>
             </RadzenDataGridColumn>
         </Columns>
     </RadzenDataGrid>
 </RadzenStack>
-
-<DetailedRaceView Year="@(_selectedRace?.StartTime.Year ?? null)" Code="@(_selectedRace?.Code ?? null)" />
 
 @code {
     [CascadingParameter(Name = "Club")]
@@ -120,4 +119,6 @@
         await RaceService.DeleteRaceByCodeAsync(race.Code);
         _races = await RaceService.GetAllRacesAsync();
     }
+
+    private void GoToRace(string raceCode) => NavigationManager.NavigateTo($"/race/{raceCode}");
 }
