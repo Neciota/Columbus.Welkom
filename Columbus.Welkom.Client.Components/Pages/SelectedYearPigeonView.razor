@@ -4,6 +4,7 @@
 @using Columbus.Welkom.Application.Services.Interfaces
 @inject IOwnerService OwnerService
 @inject ISelectedYearPigeonService SelectedYearPigeonService
+@inject ISettingService SettingService
 
 <RadzenStack AlignItems="AlignItems.Start" Orientation="Orientation.Vertical">
     <RadzenText TextStyle="TextStyle.DisplayH6">
@@ -18,39 +19,48 @@
     <RadzenDataGrid Data="_ownerPigeonPairs" EmptyText="Geen tientjesduiven gevonden." @ref="_ownerPigeonGrid">
         <Columns>
             <RadzenDataGridColumn TItem="OwnerPigeonPair" Title="Lid">
-                <Template>
+                <Template Context="ownerPigeonPair">
+                    @if (ownerPigeonPair.Owner is not null)
+                    {
+                        <span>@ownerPigeonPair.Owner.Id - @ownerPigeonPair.Owner.Name</span>
+                    }
+                </Template>
+                <EditTemplate Context="ownerPigeonPair">
                     <RadzenDropDown TValue="Owner"
                                     Data="SelectableOwners()"
-                                    @bind-Value="context.Owner"
-                                    Change="@(() => HandleOwnerChange(context))"
+                                    @bind-Value="ownerPigeonPair.Owner"
+                                    Change="@(() => HandleOwnerChange(ownerPigeonPair))"
                                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                     FilterOperator="StringFilterOperator.Contains"
                                     AllowFiltering="true"
                                     Style="width: 100%">
                         <Template Context="possibleOwner">
-                            @((possibleOwner as Owner)!.Id): @((possibleOwner as Owner)!.Name)
+                            @((possibleOwner as Owner)!.Id) - @((possibleOwner as Owner)!.Name)
                         </Template>
                     </RadzenDropDown>
-                </Template>
+                </EditTemplate>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="OwnerPigeonPair" Title="Duif">
-                <Template>
+                <Template Context="ownerPigeonPair">
+                    @ownerPigeonPair.Pigeon?.Id
+                </Template>
+                <EditTemplate Context="ownerPigeonPair">
                     <RadzenDropDown TValue="Pigeon"
-                                    Data="SelectablePigeons(context.Owner)"
-                                    @bind-Value="context.Pigeon"
-                                    Change="@(() => HandlePigeonChange(context))"
+                                    Data="SelectablePigeons(ownerPigeonPair.Owner)"
+                                    @bind-Value="ownerPigeonPair.Pigeon"
+                                    Change="@(() => HandlePigeonChange(ownerPigeonPair))"
                                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                     FilterOperator="StringFilterOperator.Contains"
                                     AllowFiltering="true"
                                     Style="width: 100%" />
-                </Template>
+                </EditTemplate>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="OwnerPigeonPair" Title="Punten" Property="Points" />
-            <RadzenDataGridColumn TItem="OwnerPigeonPair" Width="50px">
-                <Template>
+            <RadzenDataGridColumn TItem="OwnerPigeonPair" Title="Punten" Property="@nameof(OwnerPigeonPair.Points)" />
+            <RadzenDataGridColumn TItem="OwnerPigeonPair" Width="60px">
+                <Template Context="ownerPigeonPair">
                     <RadzenButton ButtonStyle="ButtonStyle.Danger"
                                   Icon="delete"
-                                  Click="@(() => DeleteOwnerPigeonPair(context))" />
+                                  Click="@(() => DeleteOwnerPigeonPair(ownerPigeonPair))" />
                 </Template>
             </RadzenDataGridColumn>
         </Columns>
@@ -58,20 +68,15 @@
 </RadzenStack>
 
 @code {
-    [CascadingParameter(Name = "Club")]
-    public int Club { get; set; }
-    [CascadingParameter(Name = "Year")]
-    public int Year { get; set; }
-
     private RadzenDataGrid<OwnerPigeonPair> _ownerPigeonGrid = null!;
-    private IEnumerable<Owner> _allOwners = null!;
-    private IEnumerable<OwnerPigeonPair> _ownerPigeonPairs = null!;
+    private IEnumerable<Owner> _allOwners = [];
+    private IEnumerable<OwnerPigeonPair> _ownerPigeonPairs = [];
 
     protected override async Task OnParametersSetAsync()
     {
         await base.OnParametersSetAsync();
 
-        _allOwners = await OwnerService.GetOwnersWithYearPigeonsAsync(Year);
+        _allOwners = await OwnerService.GetOwnersWithYearPigeonsAsync(SettingService.Year);
         _ownerPigeonPairs = await SelectedYearPigeonService.GetOwnerPigeonPairsAsync();
 
         foreach (OwnerPigeonPair ownerPigeonPair in _ownerPigeonPairs)
@@ -92,20 +97,20 @@
         if (ownerPigeonPair.Pigeon is null)
             return;
 
-        await SelectedYearPigeonService.DeleteOwnerPigeonPairForYearAsync(Year, ownerPigeonPair.Pigeon);
+        await SelectedYearPigeonService.DeleteOwnerPigeonPairForYearAsync(SettingService.Year, ownerPigeonPair.Pigeon);
 
         ownerPigeonPair.ResetOnOwnerChange();
     }
 
     private async Task HandlePigeonChange(OwnerPigeonPair ownerPigeonPair)
     {
-        await SelectedYearPigeonService.UpdatePigeonForOwnerAsync(Year, ownerPigeonPair);
+        await SelectedYearPigeonService.UpdatePigeonForOwnerAsync(SettingService.Year, ownerPigeonPair);
         _ownerPigeonPairs = await SelectedYearPigeonService.GetOwnerPigeonPairsAsync();
     }
 
     private async Task DeleteOwnerPigeonPair(OwnerPigeonPair ownerPigeonPair)
     {
-        await SelectedYearPigeonService.DeleteOwnerPigeonPairForYearAsync(Year, ownerPigeonPair);
+        await SelectedYearPigeonService.DeleteOwnerPigeonPairForYearAsync(SettingService.Year, ownerPigeonPair);
         _ownerPigeonPairs = _ownerPigeonPairs.Where(pair => pair != ownerPigeonPair);
     }
 

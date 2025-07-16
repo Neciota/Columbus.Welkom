@@ -29,7 +29,7 @@ namespace Columbus.Welkom.Application.Repositories
             if (!includeOwnersWithoutPigeons)
                 query = query.Where(o => o.Pigeons!.Any());
 
-            return await query.Include(o => o.Pigeons!.Where(p => p.Id.Year == year))
+            return await query.Include(o => o.Pigeons!.Where(p => p.Id.Year == year % 100))
                 .ToListAsync();
         }
 

@@ -23,8 +23,8 @@ namespace Columbus.Welkom.Application.Models.ViewModels
             Points = points;
         }
 
-        public Owner Owner { get; set; }
-        public Pigeon Pigeon { get; set; }
+        public Owner? Owner { get; set; }
+        public Pigeon? Pigeon { get; set; }
         public int Points { get; set; }
 
         public void ResetOnOwnerChange()

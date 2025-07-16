@@ -65,11 +65,11 @@ namespace Columbus.Welkom.Client
 
             //string connectionString = builder.Configuration.GetConnectionString() ?? throw new InvalidOperationException("No connection string has been set.");
             string connectionString = $"Data Source={Path.Combine(appFolder, "database.db")}";
-            builder.Services.AddDbContext<DataContext>(options => options.UseSqlite(connectionString));
+            builder.Services.AddDbContext<DataContext>(options => options.UseSqlite(connectionString), ServiceLifetime.Transient);
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
             var app = builder.Build();

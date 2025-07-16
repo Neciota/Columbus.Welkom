@@ -8,7 +8,7 @@
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 
-<RadzenStack AlignItems="AlignItems.Start" Orientation="Orientation.Vertical" Visible="_selectedRace is null">
+<RadzenStack AlignItems="AlignItems.Start" Orientation="Orientation.Vertical">
     <RadzenText TextStyle="TextStyle.DisplayH6">
         Vluchten
     </RadzenText>
@@ -35,12 +35,12 @@
             <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.StartTime)" FormatString="{0:d-M-yyyy HH:mm:ss}" Title="Lostijd" />
             <RadzenDataGridColumn TItem="SimpleRace" Title="Lengtegraad">
                 <Template Context="race">
-                    @Math.Round(race.Location.Longitude, 2)
+                    @($"{race.Location.Longitude:F2}")
                 </Template>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="SimpleRace" Title="Breedtegraad">
                 <Template Context="race">
-                    @Math.Round(race.Location.Lattitude, 2)
+                    @($"{race.Location.Lattitude:F2}")
                 </Template>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.OwnerCount)" Title="Leden" />
@@ -61,8 +61,7 @@
     [CascadingParameter(Name = "Year")]
     public int Year { get; set; }
 
-    private IEnumerable<SimpleRace> _races = null!;
-    private SimpleRace? _selectedRace;
+    private IEnumerable<SimpleRace> _races = [];
     private bool _isLoading = false;
 
     protected override async Task OnParametersSetAsync()
