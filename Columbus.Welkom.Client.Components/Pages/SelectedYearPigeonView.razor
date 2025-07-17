@@ -4,7 +4,6 @@
 @using Columbus.Welkom.Application.Services.Interfaces
 @inject IOwnerService OwnerService
 @inject ISelectedYearPigeonService SelectedYearPigeonService
-@inject ISettingService SettingService
 
 <RadzenStack AlignItems="AlignItems.Start" Orientation="Orientation.Vertical">
     <RadzenText TextStyle="TextStyle.DisplayH6">
@@ -27,7 +26,7 @@
                 </Template>
                 <EditTemplate Context="ownerPigeonPair">
                     <RadzenDropDown TValue="Owner"
-                                    Data="SelectableOwners()"
+                                    Data="SelectableOwners"
                                     @bind-Value="ownerPigeonPair.Owner"
                                     Change="@(() => HandleOwnerChange(ownerPigeonPair))"
                                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
@@ -68,7 +67,12 @@
 </RadzenStack>
 
 @code {
-    private RadzenDataGrid<OwnerPigeonPair> _ownerPigeonGrid = null!;
+    [CascadingParameter(Name = "Club")]
+    public int Club { get; set; }
+    [CascadingParameter(Name = "Year")]
+    public int Year { get; set; }
+
+    private RadzenDataGrid<OwnerPigeonPair>? _ownerPigeonGrid;
     private IEnumerable<Owner> _allOwners = [];
     private IEnumerable<OwnerPigeonPair> _ownerPigeonPairs = [];
 
@@ -76,14 +80,11 @@
     {
         await base.OnParametersSetAsync();
 
-        _allOwners = await OwnerService.GetOwnersWithYearPigeonsAsync(SettingService.Year);
+        _allOwners = await OwnerService.GetOwnersWithYearPigeonsAsync(Year - 1);
         _ownerPigeonPairs = await SelectedYearPigeonService.GetOwnerPigeonPairsAsync();
-
-        foreach (OwnerPigeonPair ownerPigeonPair in _ownerPigeonPairs)
-            ownerPigeonPair.Owner!.Pigeons = _allOwners.First(o => o.Id == ownerPigeonPair.Owner.Id).Pigeons;
     }
 
-    private IEnumerable<Owner> SelectableOwners() => _allOwners.Where(o => _ownerPigeonPairs.All(opp => opp.Owner?.Id != o.Id));
+    private IEnumerable<Owner> SelectableOwners => _allOwners.ExceptBy(_ownerPigeonPairs.Select(opp => opp.Owner?.Id), o => o.Id);
     private IEnumerable<Pigeon> SelectablePigeons(Owner? owner)
     {
         if (owner is null)
@@ -97,22 +98,26 @@
         if (ownerPigeonPair.Pigeon is null)
             return;
 
-        await SelectedYearPigeonService.DeleteOwnerPigeonPairForYearAsync(SettingService.Year, ownerPigeonPair.Pigeon);
+        await SelectedYearPigeonService.DeleteOwnerPigeonPairByIdAsync(ownerPigeonPair.Id);
 
         ownerPigeonPair.ResetOnOwnerChange();
     }
 
     private async Task HandlePigeonChange(OwnerPigeonPair ownerPigeonPair)
     {
-        await SelectedYearPigeonService.UpdatePigeonForOwnerAsync(SettingService.Year, ownerPigeonPair);
+        await SelectedYearPigeonService.UpdateAsync(ownerPigeonPair);
         _ownerPigeonPairs = await SelectedYearPigeonService.GetOwnerPigeonPairsAsync();
     }
 
     private async Task DeleteOwnerPigeonPair(OwnerPigeonPair ownerPigeonPair)
     {
-        await SelectedYearPigeonService.DeleteOwnerPigeonPairForYearAsync(SettingService.Year, ownerPigeonPair);
-        _ownerPigeonPairs = _ownerPigeonPairs.Where(pair => pair != ownerPigeonPair);
+        _ownerPigeonPairs = _ownerPigeonPairs.Except([ownerPigeonPair]);
+
+        if (ownerPigeonPair.Id == 0)
+            return;
+
+        await SelectedYearPigeonService.DeleteOwnerPigeonPairByIdAsync(ownerPigeonPair.Id);
     }
 
-    private void AddOwnerPigeonPair() => _ownerPigeonGrid.InsertRow(new OwnerPigeonPair());
+    private void AddOwnerPigeonPair() => _ownerPigeonGrid?.InsertRow(new OwnerPigeonPair());
 }

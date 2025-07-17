@@ -12,6 +12,7 @@ namespace Columbus.Welkom.Application.Repositories
         public BaseRepository(DataContext context)
         {
             _context = context;
+            _context.Database.EnsureCreated();
         }
 
         public virtual async Task<IEnumerable<T>> GetAllAsync()

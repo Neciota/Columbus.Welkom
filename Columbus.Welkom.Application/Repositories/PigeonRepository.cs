@@ -10,12 +10,12 @@ namespace Columbus.Welkom.Application.Repositories
     {
         public PigeonRepository(DataContext context) : base(context) { }
 
-        public async Task<PigeonEntity> GetByPigeonIdAsync(PigeonId pigeonId)
+        public async Task<PigeonEntity?> GetByPigeonIdAsync(PigeonId pigeonId)
         {
             return await _context.Pigeons.Where(p => p.Id.CountryCode == pigeonId.CountryCode)
                 .Where(p => p.Id.Year == pigeonId.Year)
                 .Where(p => p.Id.RingNumber == pigeonId.RingNumber)
-                .FirstAsync();
+                .FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<PigeonEntity>> GetByPigeonIdsAsync(IEnumerable<PigeonId> pigeonIds)

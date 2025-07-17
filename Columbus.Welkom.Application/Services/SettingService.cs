@@ -8,6 +8,8 @@ public class SettingService : ISettingService
 
     public int Club { get; private set; } = 2151;
 
+    public string AppDirectory { get; set; } = string.Empty;
+
     public Task SetClubAsync(int club)
     {
         Club = club;

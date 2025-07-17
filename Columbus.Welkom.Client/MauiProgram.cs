@@ -6,10 +6,8 @@ using Columbus.Welkom.Application.Repositories;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services;
 using Columbus.Welkom.Application.Services.Interfaces;
-using Columbus.Welkom.Client.Components;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Debug;
 using Radzen;
 
 namespace Columbus.Welkom.Client
@@ -62,10 +60,10 @@ namespace Columbus.Welkom.Client
             builder.Services.AddTransient<IOwnerSerializer, OwnerSerializer>();
             builder.Services.AddTransient<IPigeonSerializer, PigeonSerializer>();
             builder.Services.AddTransient<IRaceSerializer, RaceSerializer>();
+            
+            builder.Services.AddDbContext<DataContext>(ServiceLifetime.Transient);
 
-            //string connectionString = builder.Configuration.GetConnectionString() ?? throw new InvalidOperationException("No connection string has been set.");
-            string connectionString = $"Data Source={Path.Combine(appFolder, "database.db")}";
-            builder.Services.AddDbContext<DataContext>(options => options.UseSqlite(connectionString), ServiceLifetime.Transient);
+            builder.Services.AddSingleton<ILogger>(builder => new DebugLoggerProvider().CreateLogger("debug logger"));
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
@@ -74,12 +72,10 @@ namespace Columbus.Welkom.Client
 
             var app = builder.Build();
 
-            // Apply pending EF Core migrations
             using (var scope = app.Services.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<DataContext>();
-                bool created = db.Database.EnsureCreated();
-                //db.Database.Migrate();
+                var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
+                settingService.AppDirectory = appFolder;
             }
 
             return app;

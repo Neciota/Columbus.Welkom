@@ -24,6 +24,11 @@ namespace Columbus.Welkom.Application.Repositories
                 .ToListAsync();
         }
 
+        public async Task<SelectedYearPigeonEntity?> GetByIdAsync(int selectedYearPigeonId)
+        {
+            return await _context.SelectedYearPigeons.FirstOrDefaultAsync(syp => syp.Id == selectedYearPigeonId);
+        }
+
         public async Task<SelectedYearPigeonEntity?> GetByOwnerAsync(OwnerId ownerId)
         {
             return await _context.SelectedYearPigeons.FirstOrDefaultAsync(syp => syp.OwnerId == ownerId);

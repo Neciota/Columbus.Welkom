@@ -4,6 +4,7 @@
     {
         int Year { get; }
         int Club { get; }
+        string AppDirectory { get; set; }
 
         Task SetYearAsync(int year);
         Task SetClubAsync(int club);

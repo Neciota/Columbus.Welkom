@@ -41,7 +41,11 @@
 
     </RadzenSidebar>
     <RadzenBody>
-        @Body
+        <CascadingValue Value="@SettingService.Club" Name="Club">
+            <CascadingValue Value="@SettingService.Year" Name="Year">
+                @Body
+            </CascadingValue>
+        </CascadingValue>
     </RadzenBody>
 </RadzenLayout>
 
@@ -51,10 +55,14 @@
     private async Task HandleClubChanged(int club)
     {
         await SettingService.SetClubAsync(club);
+
+        NavigationManager.NavigateTo(NavigationManager.Uri, true);
     }
 
     private async Task HandleYearChanged(int year)
     {
         await SettingService.SetYearAsync(year);
+
+        NavigationManager.NavigateTo(NavigationManager.Uri, true);
     }
 }

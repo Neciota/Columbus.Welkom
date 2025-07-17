@@ -56,14 +56,16 @@ namespace Columbus.Welkom.Application.Services
             return ownerPigeonPairs.OrderByDescending(pair => pair.Points);
         }
 
-        public async Task UpdatePigeonForOwnerAsync(int year, OwnerPigeonPair ownerPigeonPair)
+        public async Task UpdateAsync(OwnerPigeonPair ownerPigeonPair)
         {
-            if (ownerPigeonPair.Owner is null)
+            if (ownerPigeonPair.Owner is null || ownerPigeonPair.Pigeon is null)
                 return;
 
-            SelectedYearPigeonEntity? selectedYearPigeonEntity = await _selectedYearPigeonRepository.GetByOwnerAsync(ownerPigeonPair.Owner.Id);
+            PigeonEntity? pigeon = await _pigeonRepository.GetByPigeonIdAsync(ownerPigeonPair.Pigeon.Id);
+            if (pigeon is null)
+                return;
 
-            PigeonEntity pigeon = await _pigeonRepository.GetByPigeonIdAsync(ownerPigeonPair.Pigeon!.Id);
+            SelectedYearPigeonEntity? selectedYearPigeonEntity = await _selectedYearPigeonRepository.GetByIdAsync(ownerPigeonPair.Id);
 
             if (selectedYearPigeonEntity is null)
             {
@@ -74,27 +76,20 @@ namespace Columbus.Welkom.Application.Services
                 });
             } else
             {
+                selectedYearPigeonEntity.OwnerId = ownerPigeonPair.Owner.Id;
                 selectedYearPigeonEntity.PigeonId = pigeon.Id;
                 await _selectedYearPigeonRepository.UpdateAsync(selectedYearPigeonEntity);
             }
         }
 
-        public async Task DeleteOwnerPigeonPairForYearAsync(int year, Pigeon pigeon)
+        public async Task DeleteOwnerPigeonPairByIdAsync(int ownerPigeonPairId)
         {
-            SelectedYearPigeonEntity? oldPair = await _selectedYearPigeonRepository.GetByPigeonIdAsync(pigeon.Id);
+            SelectedYearPigeonEntity? oldPair = await _selectedYearPigeonRepository.GetByIdAsync(ownerPigeonPairId);
 
             if (oldPair is null)
                 throw new InvalidOperationException("No pair with this pigeon present.");
 
-            await _selectedYearPigeonRepository.DeleteByOwnerAsync(oldPair.Owner.OwnerId);
-        }
-
-        public async Task DeleteOwnerPigeonPairForYearAsync(int year, OwnerPigeonPair ownerPigeonPair)
-        {
-            if (ownerPigeonPair.Owner is null)
-                throw new InvalidOperationException("Owner cannot be null");
-
-            await _selectedYearPigeonRepository.DeleteByOwnerAsync(ownerPigeonPair.Owner.Id);
+            await _selectedYearPigeonRepository.DeleteAsync(oldPair);
         }
     }
 }
