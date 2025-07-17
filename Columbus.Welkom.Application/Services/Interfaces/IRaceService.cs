@@ -10,8 +10,8 @@ namespace Columbus.Welkom.Application.Services.Interfaces
         Task<IEnumerable<SimpleRace>> GetAllRacesAsync();
         Task<Race> GetRaceByCodeAsync(string code);
         Task OverwriteRacesAsync(IEnumerable<Race> races);
-        Task<Race> ReadRaceFromFileAsync(string filePath);
-        Task<IEnumerable<Race>> ReadRacesFromDirectoryAsync(string directoryPath);
+        Task<Race?> ReadRaceAsync();
+        Task<IEnumerable<Race>> ReadRacesAsync();
         Task StoreRaceAsync(Race race);
     }
 }

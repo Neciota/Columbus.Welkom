@@ -9,12 +9,15 @@ using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
 using Columbus.Welkom.Application.Settings;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Columbus.Welkom.Application.Services
 {
     public class RaceService : IRaceService
     {
-        private readonly IFileProvider _fileProvider;
+        private readonly IFilePicker _filePicker;
         private readonly IOwnerRepository _ownerRepository;
         private readonly IPigeonRepository _pigeonRepository;
         private readonly IPigeonRaceRepository _pigeonRaceRepository;
@@ -22,10 +25,8 @@ namespace Columbus.Welkom.Application.Services
         private readonly IRaceSerializer _raceSerializer;
         private readonly RacePointsSettings _racePointsSettings;
 
-        private const string UdpFileExtension = ".udp";
-
         public RaceService(
-            IFileProvider fileProvider, 
+            IFilePicker filePicker, 
             IOwnerRepository ownerRepository, 
             IPigeonRepository pigeonRepository, 
             IPigeonRaceRepository pigeonRaceRepository, 
@@ -33,7 +34,7 @@ namespace Columbus.Welkom.Application.Services
             IRaceSerializer raceSerializer,
             IOptions<RacePointsSettings> racePointsSettings)
         {
-            _fileProvider = fileProvider;
+            _filePicker = filePicker;
             _ownerRepository = ownerRepository;
             _pigeonRepository = pigeonRepository;
             _pigeonRaceRepository = pigeonRaceRepository;
@@ -42,23 +43,20 @@ namespace Columbus.Welkom.Application.Services
             _racePointsSettings = racePointsSettings.Value;
         }
 
-        public async Task<Race> ReadRaceFromFileAsync(string filePath)
+        public async Task<Race?> ReadRaceAsync()
         {
-            StreamReader streamReader = await _fileProvider.GetFileAsync(filePath);
+            StreamReader? streamReader = await _filePicker.OpenFileAsync([".udp"]);
+            if (streamReader is null)
+                return null;
 
-            return await ReadRaceFromFile(streamReader);
-        }
-
-        public async Task<IEnumerable<Race>> ReadRacesFromDirectoryAsync(string directoryPath)
-        {
-            IEnumerable<string> filePaths = await _fileProvider.GetFilePathsAsync(directoryPath, UdpFileExtension);
-
-            return await Task.WhenAll(filePaths.AsParallel().Select(ReadRaceFromFileAsync));
-        }
-
-        private async Task<Race> ReadRaceFromFile(StreamReader streamReader)
-        {
             return await _raceSerializer.DeserializeAsync(streamReader);
+        }
+
+        public async Task<IEnumerable<Race>> ReadRacesAsync()
+        {
+            IEnumerable<StreamReader> streamReaders = await _filePicker.OpenFilesAsync([".udp"], new Regex(@$"2151.udp"));
+
+            return await Task.WhenAll(streamReaders.AsParallel().Select(_raceSerializer.DeserializeAsync));
         }
 
         public async Task<IEnumerable<SimpleRace>> GetAllRacesAsync()
@@ -81,11 +79,24 @@ namespace Columbus.Welkom.Application.Services
         {
             await _raceRepository.DeleteRangeAsync();
 
-            IEnumerable<Pigeon> pigeonData = races.SelectMany(r => r.PigeonRaces)
-                .Select(pr => pr.Pigeon);
-            IEnumerable<PigeonEntity> pigeonsInRaces = await _pigeonRepository.GetByPigeonIdsAsync(pigeonData.Select(p => p.Id));
+            IEnumerable<PigeonEntity> existingPigeons = await _pigeonRepository.GetByPigeonIdsAsync(races.SelectMany(r => r.PigeonRaces.Select(pr => pr.Pigeon.Id)));
+            HashSet<PigeonId> existingPigeonIds = existingPigeons.Select(p => p.Id).ToHashSet();
 
-            await _raceRepository.AddRangeAsync(races.Select(r => new RaceEntity(r)));
+            PigeonEntity[] pigeonsToAdd = races.SelectMany(r => r.PigeonRaces)
+                .ExceptBy(existingPigeonIds, pr => pr.Pigeon.Id)
+                .Select(pr => new PigeonEntity(pr.Pigeon, pr.OwnerId))
+                .ToArray();
+            await _pigeonRepository.AddRangeAsync(pigeonsToAdd);
+
+            RaceEntity[] racesToAdd = races.Select(r => new RaceEntity(r))
+                .ToArray();
+            await _raceRepository.AddRangeAsync(racesToAdd);
+
+            PigeonRaceEntity[] pigeonRacesToAdd = races.SelectMany(Race => Race.PigeonRaces.Select(PigeonRace => (PigeonRace, Race.Code)))
+                .Select(prr => new PigeonRaceEntity(prr.PigeonRace, prr.Code))
+                .ToArray();
+
+            await _pigeonRaceRepository.AddRangeAsync(pigeonRacesToAdd);
         }
 
         public async Task StoreRaceAsync(Race race)
@@ -100,8 +111,7 @@ namespace Columbus.Welkom.Application.Services
 
             RaceEntity addedRace = await _raceRepository.AddAsync(new RaceEntity(race));
 
-            IEnumerable<PigeonRaceEntity> pigeonRacesToAdd = GetPigeonRaceEntities(race.PigeonRaces, allPigeonsInRace, addedRace.Code);
-
+            IEnumerable<PigeonRaceEntity> pigeonRacesToAdd = race.PigeonRaces.Select(pr => new PigeonRaceEntity(pr, addedRace.Code));
             await _pigeonRaceRepository.AddRangeAsync(pigeonRacesToAdd);
         }
 
@@ -131,22 +141,6 @@ namespace Columbus.Welkom.Application.Services
             await _pigeonRepository.AddRangeAsync(pigeonsToAdd);
 
             return await _pigeonRepository.GetByPigeonIdsAsync(pigeons.Select(p => p.Id));
-        }
-
-        private static IEnumerable<PigeonRaceEntity> GetPigeonRaceEntities(IList<PigeonRace> pigeonRaces, IEnumerable<PigeonEntity> pigeonEntities, string raceCode)
-        {
-            Dictionary<int, PigeonEntity> pigeonEntitiesSet = pigeonEntities.ToDictionary(p => p.GetHashCode(), p => p);
-
-            List<PigeonRaceEntity> pigeonRaceEntities = new List<PigeonRaceEntity>();
-            foreach (PigeonRace pr in pigeonRaces)
-            {
-                bool found = pigeonEntitiesSet.TryGetValue(pr.Pigeon.GetHashCode(), out PigeonEntity? pigeonEntity);
-                if (!found)
-                    throw new ArgumentException($"Given pigeon list did not contain pigeon {pr.Pigeon}");
-                pigeonRaceEntities.Add(new PigeonRaceEntity(pr, raceCode));
-            }
-
-            return pigeonRaceEntities;
         }
 
         public async Task<Race> GetRaceByCodeAsync(string code)

@@ -14,20 +14,20 @@ namespace Columbus.Welkom.Application.Services
 {
     public class PigeonSwapService : IPigeonSwapService
     {
-        private readonly IFileProvider _fileProvider;
+        private readonly IFilePicker _filePicker;
         private readonly IPigeonRepository _pigeonRepository;
         private readonly IPigeonSwapRepository _pigeonSwapRepository;
         private readonly IRaceRepository _raceRepository;
         private readonly RacePointsSettings _racePointsSettings;
 
         public PigeonSwapService(
-            IFileProvider fileProvider, 
+            IFilePicker fileProvider, 
             IPigeonRepository pigeonRepository, 
             IPigeonSwapRepository pigeonSwapRepository, 
             IRaceRepository raceRepository,
             IOptions<RacePointsSettings> racePointsSettings)
         {
-            _fileProvider = fileProvider;
+            _filePicker = fileProvider;
             _pigeonRepository = pigeonRepository;
             _pigeonSwapRepository = pigeonSwapRepository;
             _raceRepository = raceRepository;
@@ -72,7 +72,10 @@ namespace Columbus.Welkom.Application.Services
             if (pigeonSwapPair.Player is null || pigeonSwapPair.Owner is null)
                 throw new ArgumentNullException("PigeonSwapPair Player, Owner, Pigeon, and CoupledOwner cannot be null.");
 
-            PigeonEntity pigeon = await _pigeonRepository.GetByPigeonIdAsync(pigeonSwapPair.Pigeon.Id);
+            PigeonEntity? pigeon = await _pigeonRepository.GetByPigeonIdAsync(pigeonSwapPair.Pigeon.Id);
+            if (pigeon is null)
+                return;
+
             PigeonSwapEntity? pigeonSwapEntity = await _pigeonSwapRepository.GetByIdAsync(pigeonSwapPair.Id);
 
             if (pigeonSwapPair.Id == 0)

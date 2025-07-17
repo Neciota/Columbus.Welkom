@@ -9,22 +9,24 @@ namespace Columbus.Welkom.Application.Services
 {
     public class OwnerService : IOwnerService
     {
-        private readonly IFileProvider _fileProvider;
+        private readonly IFilePicker _filePicker;
         private readonly IOwnerRepository _ownerRepository;
         private readonly IPigeonRepository _pigeonRepository;
         private readonly IOwnerSerializer _ownerSerializer;
 
-        public OwnerService(IOwnerRepository ownerRepository, IPigeonRepository pigeonRepository, IFileProvider fileProvider, IOwnerSerializer ownerSerializer)
+        public OwnerService(IOwnerRepository ownerRepository, IPigeonRepository pigeonRepository, IFilePicker filePicker, IOwnerSerializer ownerSerializer)
         {
-            _fileProvider = fileProvider;
+            _filePicker = filePicker;
             _ownerRepository = ownerRepository;
             _pigeonRepository = pigeonRepository;
             _ownerSerializer = ownerSerializer;
         }
 
-        public async Task<IEnumerable<Owner>> ReadOwnersFromFile(string filePath)
+        public async Task<IEnumerable<Owner>> ReadOwnersFromFileAsync()
         {
-            StreamReader stream = await _fileProvider.GetFileAsync(filePath);
+            StreamReader? stream = await _filePicker.OpenFileAsync([".udp"]);
+            if (stream is null)
+                return [];
 
             return await _ownerSerializer.DeserializeAsync(stream);
         }

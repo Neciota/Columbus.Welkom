@@ -1,9 +1,13 @@
-﻿using IFilePicker = Columbus.Welkom.Application.Providers.IFilePicker;
+﻿using System.Text;
+using System.Text.RegularExpressions;
+using IFilePicker = Columbus.Welkom.Application.Providers.IFilePicker;
 
 namespace Columbus.Welkom.Client;
 
 public class FilePicker : IFilePicker
 {
+    private const int FileBufferSize = 10_000_000;
+
     public async Task<string?> PickFileAsync(string[] fileTypes)
     {
         FileResult? fileResult = await GetFileAsync(fileTypes);
@@ -11,13 +15,32 @@ public class FilePicker : IFilePicker
         return fileResult?.FullPath;
     }
 
-    public async Task<Stream?> OpenFileAsync(string[] fileTypes)
+    public async Task<IEnumerable<string>> PickFilesAsync(string[] fileTypes)
+    {
+        IEnumerable<FileResult> fileResults = await GetFilesAsync(fileTypes);
+
+        return fileResults.Select(f => f.FullPath);
+    }
+
+    public async Task<StreamReader?> OpenFileAsync(string[] fileTypes)
     {
         FileResult? fileResult = await GetFileAsync(fileTypes);
         if (fileResult is null)
             return null;
 
-        return await fileResult.OpenReadAsync();
+        Stream stream = await fileResult.OpenReadAsync();
+        return new StreamReader(stream, Encoding.Latin1, false, FileBufferSize);
+    }
+
+    public async Task<IEnumerable<StreamReader>> OpenFilesAsync(string[] fileTypes, Regex? nameMustMatch = null)
+    {
+        IEnumerable<FileResult> fileResult = await GetFilesAsync(fileTypes);
+
+        if (nameMustMatch is not null)
+            fileResult = fileResult.Where(f => nameMustMatch.IsMatch(f.FileName));
+
+        return (await Task.WhenAll(fileResult.Select(async f => await f.OpenReadAsync())))
+            .Select(f => new StreamReader(f, Encoding.Latin1, false, FileBufferSize));
     }
 
     private static async Task<FileResult?> GetFileAsync(string[] fileTypes)
@@ -33,5 +56,20 @@ public class FilePicker : IFilePicker
         };
 
         return await Microsoft.Maui.Storage.FilePicker.PickAsync(options);
+    }
+
+    private async Task<IEnumerable<FileResult>> GetFilesAsync(string[] fileTypes)
+    {
+        Dictionary<DevicePlatform, IEnumerable<string>> fileTypesByDevice = new()
+        {
+            { DevicePlatform.WinUI, fileTypes }
+        };
+
+        PickOptions options = new()
+        {
+            FileTypes = new FilePickerFileType(fileTypesByDevice)
+        };
+
+        return await Microsoft.Maui.Storage.FilePicker.PickMultipleAsync(options);
     }
 }

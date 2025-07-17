@@ -3,7 +3,6 @@
 @using Columbus.Welkom.Application.Models.ViewModels
 @using Columbus.Welkom.Application.Providers
 @using Columbus.Welkom.Application.Services.Interfaces
-@inject IFilePicker FilePicker
 @inject IRaceService RaceService
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
@@ -77,7 +76,7 @@
 
         try
         {
-            IEnumerable<Race> races = await RaceService.ReadRacesFromDirectoryAsync(string.Empty);
+            IEnumerable<Race> races = await RaceService.ReadRacesAsync();
             await RaceService.OverwriteRacesAsync(races);
             _races = await RaceService.GetAllRacesAsync();
         } catch (JSException)
@@ -96,11 +95,9 @@
 
         try
         {
-            string? filePath = await FilePicker.PickFileAsync([".udp"]);
-            if (filePath is null)
+            Race? newRace = await RaceService.ReadRaceAsync();
+            if (newRace is null)
                 return;
-
-            Race newRace = await RaceService.ReadRaceFromFileAsync(filePath);
 
             await RaceService.StoreRaceAsync(newRace);
             _races = await RaceService.GetAllRacesAsync();

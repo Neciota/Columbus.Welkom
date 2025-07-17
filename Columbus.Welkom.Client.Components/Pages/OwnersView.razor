@@ -3,7 +3,6 @@
 @using Columbus.Welkom.Application.Providers
 @using Columbus.Welkom.Application.Services.Interfaces
 @inject NotificationService NotificationService
-@inject IFilePicker FilePicker
 @inject IOwnerService OwnerService
 
 <RadzenStack AlignItems="AlignItems.Start" Orientation="Orientation.Vertical">
@@ -55,18 +54,16 @@
         _isUploading = true;
         try
         {
-            string? filePath = await FilePicker.PickFileAsync([".udp"]);
-            if (filePath is null)
-                return;
-            _owners = await OwnerService.ReadOwnersFromFile(filePath);
+            _owners = await OwnerService.ReadOwnersFromFileAsync();
+            await OwnerService.OverwriteOwnersAsync(_owners);
         }
         catch (JSException)
         {
             NotificationService.Notify(NotificationSeverity.Error, "Fout", "Bestand kon niet worden geladen.");
             return;
+        } finally
+        {
+            _isUploading = false;
         }
-
-        await OwnerService.OverwriteOwnersAsync(_owners);
-        _isUploading = false;
     }
 }

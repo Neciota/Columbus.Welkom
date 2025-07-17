@@ -54,7 +54,6 @@ namespace Columbus.Welkom.Client
             builder.Services.AddTransient<ISelectedYearPigeonRepository, SelectedYearPigeonRepository>();
             builder.Services.AddTransient<ISelectedYoungPigeonRepository, SelectedYoungPigeonRepository>();
 
-            builder.Services.AddTransient<Application.Providers.IFileProvider, SystemFileProvider>();
             builder.Services.AddTransient<Application.Providers.IFilePicker, FilePicker>();
 
             builder.Services.AddTransient<IOwnerSerializer, OwnerSerializer>();
