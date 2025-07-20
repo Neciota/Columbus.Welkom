@@ -1,6 +1,7 @@
 ﻿using Columbus.Models;
 using Columbus.Models.Owner;
 using Columbus.Models.Pigeon;
+using Columbus.Models.Race;
 using Columbus.Welkom.Application.Database.ValueConverters;
 using Columbus.Welkom.Application.Models.Entities;
 using Columbus.Welkom.Application.Services.Interfaces;
@@ -41,6 +42,8 @@ public class DataContext : DbContext
             .HaveConversion<RingNumberConverter>();
         configurationBuilder.Properties<CountryCode>()
             .HaveConversion<CountryCodeConverter>();
+        configurationBuilder.Properties<RaceType>()
+            .HaveConversion<RaceTypeConverter>();
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

@@ -48,9 +48,6 @@ namespace Columbus.Welkom.Application.Models.Entities
                 .OrderByDescending(pr => pr.GetSpeed(ownerRaces[pr.OwnerId].Distance, StartTime, ownerRaces[pr.OwnerId].ClockDeviation))
                 .ToList();
 
-            var sample = pigeonRaces.First();
-            var speed = sample.GetSpeed(ownerRaces[sample.OwnerId].Distance, StartTime, ownerRaces[sample.OwnerId].ClockDeviation);
-
             return new Race(
                 Number,
                 Type,

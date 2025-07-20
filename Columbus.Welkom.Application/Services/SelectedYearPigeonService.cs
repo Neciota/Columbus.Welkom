@@ -4,7 +4,6 @@ using Columbus.Welkom.Application.Models.Entities;
 using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
-using Columbus.Welkom.Application.Settings;
 using Microsoft.Extensions.Options;
 
 namespace Columbus.Welkom.Application.Services
@@ -32,12 +31,12 @@ namespace Columbus.Welkom.Application.Services
         {
             IEnumerable<SelectedYearPigeonEntity> selectedYearPigeonEntities = await _selectedYearPigeonRepository.GetAllAsync();
             IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync([ 
-                RaceType.V,
-                RaceType.M,
-                RaceType.E,
-                RaceType.O,
-                RaceType.X,
-                RaceType.N
+                RaceType.Create('V'),
+                RaceType.Create('M'),
+                RaceType.Create('E'),
+                RaceType.Create('O'),
+                RaceType.Create('X'),
+                RaceType.Create('N')
             ]);
             IEnumerable<Race> races = raceEntities.Select(re => re.ToRace(_racePointsSettings.PointsQuotient, _racePointsSettings.MaxPoints, _racePointsSettings.MinPoints));
 

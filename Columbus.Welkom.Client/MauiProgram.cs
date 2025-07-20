@@ -1,7 +1,6 @@
 ﻿using Columbus.UDP;
 using Columbus.UDP.Interfaces;
 using Columbus.Welkom.Application.Database;
-using Columbus.Welkom.Application.Providers;
 using Columbus.Welkom.Application.Repositories;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services;
@@ -55,6 +54,7 @@ namespace Columbus.Welkom.Client
             builder.Services.AddTransient<ISelectedYoungPigeonRepository, SelectedYoungPigeonRepository>();
 
             builder.Services.AddTransient<Application.Providers.IFilePicker, FilePicker>();
+            builder.Services.AddTransient(b => new Application.Providers.SettingsProvider(appFolder));
 
             builder.Services.AddTransient<IOwnerSerializer, OwnerSerializer>();
             builder.Services.AddTransient<IPigeonSerializer, PigeonSerializer>();

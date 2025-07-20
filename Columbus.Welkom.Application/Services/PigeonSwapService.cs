@@ -7,7 +7,6 @@ using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Providers;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
-using Columbus.Welkom.Application.Settings;
 using Microsoft.Extensions.Options;
 
 namespace Columbus.Welkom.Application.Services
@@ -38,7 +37,7 @@ namespace Columbus.Welkom.Application.Services
         {
             IEnumerable<PigeonSwapEntity> pigeonSwapEntities = await _pigeonSwapRepository.GetAllWithOwnersAndPigeonAsync();
 
-            IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync([RaceType.L]);
+            IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync([RaceType.Create('L')]);
             IEnumerable<Race> races = raceEntities.Select(r => r.ToRace(_racePointsSettings.PointsQuotient, _racePointsSettings.MaxPoints, _racePointsSettings.MinPoints));
 
             List<PigeonSwapPair> pigeonSwapPairs = pigeonSwapEntities.Select(ps => ps.ToPigeonSwapPair()).ToList();

@@ -26,7 +26,7 @@
                                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                     FilterOperator="StringFilterOperator.Contains"
                                     AllowFiltering="true"
-                                    Style="width: 100%">
+                                    class="rz-w-100">
                         <Template Context="possibleOwner">
                             @((possibleOwner as Owner)!.Id): @((possibleOwner as Owner)!.Name)
                         </Template>
@@ -42,7 +42,7 @@
                                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                     FilterOperator="StringFilterOperator.Contains"
                                     AllowFiltering="true"
-                                    Style="width: 100%" />
+                                    class="rz-w-100" />
                 </Template>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="OwnerPigeonPair" Title="Punten" Property="Points" />

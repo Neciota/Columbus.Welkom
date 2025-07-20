@@ -1,0 +1,287 @@
+@page "/settings"
+@using Columbus.Welkom.Application.Models.ViewModels
+@inject ISettingService SettingService
+
+<RadzenRow>
+    <RadzenColumn Size="12" SizeMD="6">
+        <RadzenFieldset Text="Vluchttypes" AllowCollapse="true" Collapsed="false">
+            <RadzenStack Orientation="Orientation.Vertical">
+                <RadzenDataList Data="_settings.RaceTypeDescriptions" Density="Density.Compact">
+                    <Template Context="raceType">
+                        <RadzenRow AlignItems="AlignItems.Center">
+                            <RadzenColumn Size="2">
+                                @raceType.RaceType.ToString()
+                            </RadzenColumn>
+                            <RadzenColumn Size="9">
+                                @raceType.Description
+                            </RadzenColumn>
+                            <RadzenColumn Size="1">
+                                <RadzenButton Icon="delete"
+                                              ButtonStyle="ButtonStyle.Dark"
+                                              Variant="Variant.Text"
+                                              Click="() => DeleteRaceTypeAsync(raceType)" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </Template>
+                </RadzenDataList>
+
+                <RadzenRow AlignItems="AlignItems.Center" class="rz-mx-4">
+                    <RadzenColumn Size="2">
+                        <RadzenDropDown Data="RemainingRaceTypes"
+                                        Value="_newRaceType.RaceType.Value"
+                                        Change="v => _newRaceType.RaceType = RaceType.Create(Convert.ToChar((int)v))">
+                            <Template Context="letter">
+                                @(((char)letter).ToString())
+                            </Template>
+                            <ValueTemplate Context="letter">
+                                @(((char)letter).ToString())
+                            </ValueTemplate>
+                        </RadzenDropDown>
+                    </RadzenColumn>
+                    <RadzenColumn Size="9">
+                        <RadzenTextBox @bind-Value="_newRaceType.Description" class="rz-w-100" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="1">
+                        <RadzenButton Icon="add"
+                                      ButtonStyle="ButtonStyle.Dark"
+                                      Click="AddRaceTypeAsync" />
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenFieldset>
+    </RadzenColumn>
+
+    <RadzenColumn Size="12" SizeMD="6">
+        <RadzenFieldset Text="Database" AllowCollapse="true" Collapsed="false">
+            <RadzenStack Orientation="Orientation.Vertical">
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        Pad
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenLink Path="@($"file:///{SettingService.AppDirectory}")" Text="@SettingService.AppDirectory" Target="_blank" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenButton Text="Exporteren"
+                                      Icon="download" />
+                        <RadzenButton Text="Importeren"
+                                      Icon="upload"
+                                      ButtonStyle="ButtonStyle.Secondary" />
+                    </RadzenColumn>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenFieldset>
+
+        <RadzenFieldset Text="Geldende vluchttypes" AllowCollapse="true" Collapsed="false">
+            <RadzenStack Orientation="Orientation.Vertical">
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        Tientjesduif
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenDropDown Data="RaceTypes"
+                                        @bind-Value="_settings.AppliedRaceTypes.SelectedYearPigeonRaceTypes"
+                                        Multiple="true"
+                                        Separator=", "
+                                        MaxSelectedLabels="RaceTypes.Count() + 1"
+                                        Change="SaveSettingsAsync"
+                                        class="rz-w-100" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        Knaakduif
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenDropDown Data="RaceTypes"
+                                        @bind-Value="_settings.AppliedRaceTypes.SelectedYoungPigeonRaceTypes"
+                                        Multiple="true"
+                                        Separator=", "
+                                        MaxSelectedLabels="RaceTypes.Count() + 1"
+                                        Change="SaveSettingsAsync"
+                                        class="rz-w-100" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        Ploegenspel
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenDropDown Data="RaceTypes"
+                                        @bind-Value="_settings.AppliedRaceTypes.TeamRaceTypes"
+                                        Multiple="true"
+                                        Separator=", "
+                                        MaxSelectedLabels="RaceTypes.Count() + 1"
+                                        Change="SaveSettingsAsync"
+                                        class="rz-w-100" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        Divisiespel
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenDropDown Data="RaceTypes"
+                                        @bind-Value="_settings.AppliedRaceTypes.LeagueRaceTypes"
+                                        Multiple="true"
+                                        Separator=", "
+                                        MaxSelectedLabels="RaceTypes.Count() + 1"
+                                        Change="SaveSettingsAsync"
+                                        class="rz-w-100" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        Duivenwissel
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenDropDown Data="RaceTypes"
+                                        @bind-Value="_settings.AppliedRaceTypes.PigeonSwapRaceTypes"
+                                        Multiple="true"
+                                        Separator=", "
+                                        MaxSelectedLabels="RaceTypes.Count() + 1"
+                                        Change="SaveSettingsAsync"
+                                        class="rz-w-100" />
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenFieldset>
+
+        <RadzenFieldset Text="Punten" AllowCollapse="true" Collapsed="false">
+            <RadzenStack Orientation="Orientation.Vertical">
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        Vluchttype
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenDropDown Data="RaceTypes"
+                                        @bind-Value="_selectedRaceType"
+                                        Change="OnSelectedRaceTypeChange"
+                                        class="rz-w-100" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        Prijzendeler (1 op n)
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenNumeric @bind-Value="_racePointsSettings.PointsQuotient"
+                                       TValue="int"
+                                       Disabled="!_selectedRaceType.HasValue"
+                                       Change="ChangePointSettingsAsync"
+                                       class="rz-w-100" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        Max. punten
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenNumeric @bind-Value="_racePointsSettings.MaxPoints"
+                                       TValue="int"
+                                       Disabled="!_selectedRaceType.HasValue"
+                                       Change="ChangePointSettingsAsync"
+                                       class="rz-w-100" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        Min. punten
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenNumeric @bind-Value="_racePointsSettings.MinPoints"
+                                       TValue="int"
+                                       Disabled="!_selectedRaceType.HasValue"
+                                       Change="ChangePointSettingsAsync"
+                                       class="rz-w-100" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        Aantal decimalen
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenNumeric @bind-Value="_racePointsSettings.DecimalCount"
+                                       TValue="int"
+                                       Change="ChangePointSettingsAsync"
+                                       Disabled="!_selectedRaceType.HasValue"
+                                       class="rz-w-100" />
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenFieldset>
+    </RadzenColumn>
+</RadzenRow>
+
+@code {
+    [CascadingParameter(Name = "Club")]
+    public int Club { get; set; }
+    [CascadingParameter(Name = "Year")]
+    public int Year { get; set; }
+
+    private Settings _settings = new();
+    private RaceType? _selectedRaceType;
+
+    private RaceTypeDescription _newRaceType = new();
+
+    private RacePointsSettings _racePointsSettings = new();
+    private IEnumerable<RaceType> RaceTypes => _settings.RaceTypeDescriptions.Select(rtd => rtd.RaceType);
+    private IEnumerable<int> RemainingRaceTypes => Enumerable.Range('A', 'Z' - 'A' + 1)
+        .ExceptBy(_settings.RaceTypeDescriptions.Select(rtd => rtd.RaceType), v => RaceType.Create(Convert.ToChar((int)v)));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _settings = await SettingService.GetSettingsAsync();
+    }
+
+    private void OnSelectedRaceTypeChange()
+    {
+        if (_selectedRaceType is null)
+            return;
+
+        _racePointsSettings = _settings.RacePointsSettings.FirstOrDefault(rps => rps.RaceType == _selectedRaceType) ?? new() { RaceType = _selectedRaceType.Value };
+    }
+
+    private async Task AddRaceTypeAsync()
+    {
+        _settings.RaceTypeDescriptions = _settings.RaceTypeDescriptions.Append(_newRaceType)
+            .OrderBy(rtd => rtd.RaceType);
+        _newRaceType = new RaceTypeDescription();
+
+        await SaveSettingsAsync();
+    }
+
+    private async Task DeleteRaceTypeAsync(RaceTypeDescription raceTypeDescription)
+    {
+        _settings.RaceTypeDescriptions = _settings.RaceTypeDescriptions.Except([raceTypeDescription])
+            .OrderBy(rtd => rtd.RaceType);
+
+        await SaveSettingsAsync();
+    }
+
+    private async Task ChangePointSettingsAsync()
+    {
+        if (!_settings.RacePointsSettings.Contains(_racePointsSettings))
+            _settings.RacePointsSettings = _settings.RacePointsSettings.Append(_racePointsSettings).ToArray();
+
+        await SettingService.SaveSettingsAsync(_settings);
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        await SettingService.SaveSettingsAsync(_settings);
+    }
+}

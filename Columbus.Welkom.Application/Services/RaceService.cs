@@ -7,7 +7,6 @@ using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Providers;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
-using Columbus.Welkom.Application.Settings;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Linq;
@@ -23,7 +22,7 @@ namespace Columbus.Welkom.Application.Services
         private readonly IPigeonRaceRepository _pigeonRaceRepository;
         private readonly IRaceRepository _raceRepository;
         private readonly IRaceSerializer _raceSerializer;
-        private readonly RacePointsSettings _racePointsSettings;
+        private readonly SettingsProvider _settingsProvider;
 
         public RaceService(
             IFilePicker filePicker, 
@@ -32,7 +31,7 @@ namespace Columbus.Welkom.Application.Services
             IPigeonRaceRepository pigeonRaceRepository, 
             IRaceRepository raceRepository, 
             IRaceSerializer raceSerializer,
-            IOptions<RacePointsSettings> racePointsSettings)
+            SettingsProvider settingsProvider)
         {
             _filePicker = filePicker;
             _ownerRepository = ownerRepository;
@@ -40,7 +39,7 @@ namespace Columbus.Welkom.Application.Services
             _pigeonRaceRepository = pigeonRaceRepository;
             _raceRepository = raceRepository;
             _raceSerializer = raceSerializer;
-            _racePointsSettings = racePointsSettings.Value;
+            _settingsProvider = settingsProvider;
         }
 
         public async Task<Race?> ReadRaceAsync()
@@ -147,7 +146,10 @@ namespace Columbus.Welkom.Application.Services
         {
             RaceEntity race = await _raceRepository.GetByCodeAsync(code);
 
-            return race.ToRace(_racePointsSettings.PointsQuotient, _racePointsSettings.MaxPoints, _racePointsSettings.MinPoints);
+            Settings settings = await _settingsProvider.GetSettingsAsync();
+            RacePointsSettings racePointsSettings = settings.RacePointsSettings.FirstOrDefault(rps => rps.RaceType == race.Type, new());
+
+            return race.ToRace(racePointsSettings.PointsQuotient, racePointsSettings.MaxPoints, racePointsSettings.MinPoints);
         }
 
         public async Task DeleteRaceByCodeAsync(string code)

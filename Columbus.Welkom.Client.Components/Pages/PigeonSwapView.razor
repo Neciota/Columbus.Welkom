@@ -39,7 +39,7 @@
                                     AllowFiltering="true"
                                     @bind-Value="pigeonSwapPair.Player"
                                     Change="@(() => HandlePlayerChange(pigeonSwapPair))"
-                                    Style="width: 100%">
+                                    class="rz-w-100">
                         <Template Context="possibleOwner">
                             @((possibleOwner as Owner)!.Id): @((possibleOwner as Owner)!.Name)
                         </Template>
@@ -54,7 +54,7 @@
                                     FilterOperator="StringFilterOperator.Contains"
                                     AllowFiltering="true"
                                     @bind-Value="pigeonSwapPair.Owner"
-                                    Style="width: 100%">
+                                    class="rz-w-100">
                         <Template Context="possibleOwner">
                             @((possibleOwner as Owner)!.Id): @((possibleOwner as Owner)!.Name)
                         </Template>
@@ -70,7 +70,7 @@
                                     AllowFiltering="true"
                                     @bind-Value="pigeonSwapPair.Pigeon"
                                     Change="@(() => HandlePigeonChange(pigeonSwapPair))"
-                                    Style="width: 100%" />
+                                    class="rz-w-100" />
                 </EditTemplate>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="PigeonSwapPair" Title="Gekoppelde Liefhebber" Property="CoupledPlayer">
@@ -82,7 +82,7 @@
                                     AllowFiltering="true"
                                     @bind-Value="pigeonSwapPair.CoupledPlayer"
                                     Change="@(() => HandleCoupledPlayerChange(pigeonSwapPair))"
-                                    Style="width: 100%">
+                                    class="rz-w-100">
                         <Template Context="possibleOwner">
                             @((possibleOwner as Owner)!.Id): @((possibleOwner as Owner)!.Name)
                         </Template>
@@ -132,7 +132,7 @@
         _isLoading = true;
         _allOwners = await OwnerService.GetOwnersWithYearPigeonsAsync(Year, true);
         _pigeonSwapPairs = await PigeonSwapService.GetPigeonSwapPairsAsync();
-        _races = await RaceService.GetAllRacesByTypeAsync(RaceType.L);
+        _races = await RaceService.GetAllRacesByTypeAsync(RaceType.Create('L'));
 
         foreach (PigeonSwapPair pigeonSwapPair in _pigeonSwapPairs)
             pigeonSwapPair.Owner!.Pigeons = _allOwners.First(o => o.Id == pigeonSwapPair.Owner.Id).Pigeons;

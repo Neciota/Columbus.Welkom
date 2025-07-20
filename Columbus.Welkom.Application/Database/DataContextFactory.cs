@@ -1,4 +1,5 @@
-﻿using Columbus.Welkom.Application.Services.Interfaces;
+﻿using Columbus.Welkom.Application.Models.ViewModels;
+using Columbus.Welkom.Application.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -15,20 +16,18 @@ internal class DataContextFactory : IDesignTimeDbContextFactory<DataContext>
 
     internal class DesignSettings : ISettingService
     {
-        public int Year => throw new NotImplementedException();
+        public int Year => 0;
 
-        public int Club => throw new NotImplementedException();
+        public int Club => 0;
 
-        public string AppDirectory { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string AppDirectory { get => string.Empty; set => throw new NotImplementedException(); }
 
-        public Task SetClubAsync(int club)
-        {
-            throw new NotImplementedException();
-        }
+        public Task<Settings> GetSettingsAsync() => Task.FromResult(new Settings());
 
-        public Task SetYearAsync(int year)
-        {
-            throw new NotImplementedException();
-        }
+        public Task SaveSettingsAsync(Settings settings) => Task.CompletedTask;
+
+        public Task SetClubAsync(int club) => Task.CompletedTask;
+
+        public Task SetYearAsync(int year) => Task.CompletedTask;
     }
 }
