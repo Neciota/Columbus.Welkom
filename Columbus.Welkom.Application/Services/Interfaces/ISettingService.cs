@@ -4,13 +4,12 @@ namespace Columbus.Welkom.Application.Services.Interfaces
 {
     public interface ISettingService
     {
-        int Year { get; }
-        int Club { get; }
-        string AppDirectory { get; set; }
-
         Task SetYearAsync(int year);
         Task SetClubAsync(int club);
-        Task<Settings> GetSettingsAsync();
-        Task SaveSettingsAsync(Settings settings);
+        Task<RaceSettings> GetSettingsAsync();
+        Task SaveSettingsAsync(RaceSettings settings);
+        Task ExportAsync();
+        Task ImportAsync();
+        string GetDatabasePath();
     }
 }

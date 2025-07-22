@@ -1,12 +1,15 @@
 ﻿using Columbus.UDP;
 using Columbus.UDP.Interfaces;
 using Columbus.Welkom.Application.Database;
+using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Repositories;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services;
 using Columbus.Welkom.Application.Services.Interfaces;
+using CommunityToolkit.Maui.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Debug;
+using Microsoft.Extensions.Options;
 using Radzen;
 
 namespace Columbus.Welkom.Client
@@ -20,6 +23,7 @@ namespace Columbus.Welkom.Client
 
             var builder = MauiApp.CreateBuilder();
             builder.UseMauiApp<App>()
+                .UseMauiCommunityToolkitCore()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -36,6 +40,7 @@ namespace Columbus.Welkom.Client
 
             builder.Services.AddRadzenComponents();
 
+            builder.Services.AddOptions<IOptions<AppSettings>>();
             builder.Services.AddSingleton<ISettingService, SettingService>();
 
             builder.Services.AddTransient<ILeaguesService, LeaguesService>();
@@ -73,8 +78,8 @@ namespace Columbus.Welkom.Client
 
             using (var scope = app.Services.CreateScope())
             {
-                var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
-                settingService.AppDirectory = appFolder;
+                var appSettings = scope.ServiceProvider.GetRequiredService<IOptions<AppSettings>>();
+                appSettings.Value.AppDirectory = appFolder;
             }
 
             return app;

@@ -1,5 +1,6 @@
 @page "/settings"
 @using Columbus.Welkom.Application.Models.ViewModels
+@inject IOptions<AppSettings> Settings
 @inject ISettingService SettingService
 
 <RadzenRow>
@@ -59,17 +60,19 @@
                         Pad
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenLink Path="@($"file:///{SettingService.AppDirectory}")" Text="@SettingService.AppDirectory" Target="_blank" />
+                        <RadzenLink Path="@($"file:///{Settings.Value.AppDirectory}")" Text="@Settings.Value.AppDirectory" Target="_blank" />
                     </RadzenColumn>
                 </RadzenRow>
 
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenButton Text="Exporteren"
-                                      Icon="download" />
+                                      Icon="download"
+                                      Click="ExportAsync" />
                         <RadzenButton Text="Importeren"
                                       Icon="upload"
-                                      ButtonStyle="ButtonStyle.Secondary" />
+                                      ButtonStyle="ButtonStyle.Secondary"
+                                      Click="ImportAsync" />
                     </RadzenColumn>
                 </RadzenStack>
             </RadzenStack>
@@ -230,7 +233,7 @@
     [CascadingParameter(Name = "Year")]
     public int Year { get; set; }
 
-    private Settings _settings = new();
+    private RaceSettings _settings = new();
     private RaceType? _selectedRaceType;
 
     private RaceTypeDescription _newRaceType = new();
@@ -283,5 +286,15 @@
     private async Task SaveSettingsAsync()
     {
         await SettingService.SaveSettingsAsync(_settings);
+    }
+
+    private async Task ExportAsync()
+    {
+        await SettingService.ExportAsync();
+    }
+
+    private async Task ImportAsync()
+    {
+        await SettingService.ImportAsync();
     }
 }

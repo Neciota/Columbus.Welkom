@@ -4,17 +4,18 @@ using Columbus.Models.Pigeon;
 using Columbus.Models.Race;
 using Columbus.Welkom.Application.Database.ValueConverters;
 using Columbus.Welkom.Application.Models.Entities;
-using Columbus.Welkom.Application.Services.Interfaces;
+using Columbus.Welkom.Application.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Columbus.Welkom.Application.Database;
 public class DataContext : DbContext
 {
-    private readonly ISettingService _settingService;
+    private readonly IOptions<AppSettings> _settings;
 
-    public DataContext(DbContextOptions<DataContext> options, ISettingService settingService) : base(options)
+    public DataContext(DbContextOptions<DataContext> options, IOptions<AppSettings> settings) : base(options)
     {
-        _settingService = settingService;
+        _settings = settings;
     }
 
     public DbSet<PigeonEntity> Pigeons { get; set; }
@@ -50,7 +51,7 @@ public class DataContext : DbContext
     {
         base.OnConfiguring(optionsBuilder);
 
-        string connectionString = $"Data Source={Path.Combine(_settingService.AppDirectory, $"database_{_settingService.Club}_{_settingService.Year}.db")}";
+        string connectionString = $"Data Source={_settings.Value.GetDatabasePath()}";
         optionsBuilder.UseSqlite(connectionString);
     }
 

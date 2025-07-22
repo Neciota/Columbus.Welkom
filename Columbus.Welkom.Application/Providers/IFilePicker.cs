@@ -8,4 +8,5 @@ public interface IFilePicker
     Task<IEnumerable<StreamReader>> OpenFilesAsync(string[] fileTypes, Regex? nameMustMatch = null);
     Task<string?> PickFileAsync(string[] fileTypes);
     Task<IEnumerable<string>> PickFilesAsync(string[] fileTypes);
+    Task SaveFileAsync(string name, Stream stream, CancellationToken cancellationToken = default);
 }

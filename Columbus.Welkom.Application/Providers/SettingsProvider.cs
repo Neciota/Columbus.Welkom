@@ -13,14 +13,14 @@ public class SettingsProvider
         WriteIndented = true,
     };
 
-    private Settings? _settings;
+    private RaceSettings? _settings;
 
     public SettingsProvider(string appFolder)
     {
         _appFolder = appFolder;
     }
 
-    public async Task<Settings> GetSettingsAsync()
+    public async Task<RaceSettings> GetSettingsAsync()
     {
         if (_settings is not null)
             return _settings;
@@ -29,16 +29,16 @@ public class SettingsProvider
 
         try
         {
-            Settings? settings = await JsonSerializer.DeserializeAsync<Settings>(fileStream, _serializerOptions);
-            return settings ?? new Settings();
+            RaceSettings? settings = await JsonSerializer.DeserializeAsync<RaceSettings>(fileStream, _serializerOptions);
+            return settings ?? new RaceSettings();
         }
         catch (JsonException)
         {
-            return new Settings();
+            return new RaceSettings();
         }
     }
 
-    public async Task SaveSettingsAsync(Settings settings)
+    public async Task SaveSettingsAsync(RaceSettings settings)
     {
         _settings = settings;
 

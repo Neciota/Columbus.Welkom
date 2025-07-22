@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using CommunityToolkit.Maui.Storage;
+using System.Text;
 using System.Text.RegularExpressions;
 using IFilePicker = Columbus.Welkom.Application.Providers.IFilePicker;
 
@@ -71,5 +72,11 @@ public class FilePicker : IFilePicker
         };
 
         return await Microsoft.Maui.Storage.FilePicker.PickMultipleAsync(options);
+    }
+
+    public async Task SaveFileAsync(string name, Stream stream, CancellationToken cancellationToken = default)
+    {
+        IFileSaver fileSaver = FileSaver.Default;
+        await fileSaver.SaveAsync(name, stream, cancellationToken);
     }
 }

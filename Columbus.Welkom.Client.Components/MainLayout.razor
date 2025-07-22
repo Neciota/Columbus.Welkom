@@ -1,5 +1,5 @@
 @inherits LayoutComponentBase
-@inject ISettingService SettingService
+@inject IOptions<AppSettings> Settings
 @inject NavigationManager NavigationManager
 
 <RadzenComponents />
@@ -18,13 +18,13 @@
             <RadzenNumeric Min="2016"
                            Max="@DateTime.Today.Year"
                            TValue="int"
-                           Value="SettingService.Year"
+                           Value="Settings.Value.Year"
                            Change="HandleYearChanged"
                            Placeholder="Jaar" />
             <RadzenNumeric Format="0000"
                            Placeholder="Vereniging"
                            TValue="int"
-                           Value="SettingService.Club"
+                           Value="Settings.Value.Club"
                            Change="HandleClubChanged"
                            ShowUpDown="false" />
 
@@ -42,8 +42,8 @@
 
     </RadzenSidebar>
     <RadzenBody>
-        <CascadingValue Value="@SettingService.Club" Name="Club">
-            <CascadingValue Value="@SettingService.Year" Name="Year">
+        <CascadingValue Value="@Settings.Value.Club" Name="Club">
+            <CascadingValue Value="@Settings.Value.Year" Name="Year">
                 @Body
             </CascadingValue>
         </CascadingValue>
@@ -53,16 +53,16 @@
 @code {
     private bool _sidebarExpanded = true;
 
-    private async Task HandleClubChanged(int club)
+    private void HandleClubChanged(int club)
     {
-        await SettingService.SetClubAsync(club);
+        Settings.Value.Club = club;
 
         NavigationManager.NavigateTo(NavigationManager.Uri, true);
     }
 
-    private async Task HandleYearChanged(int year)
+    private void HandleYearChanged(int year)
     {
-        await SettingService.SetYearAsync(year);
+        Settings.Value.Year = year;
 
         NavigationManager.NavigateTo(NavigationManager.Uri, true);
     }

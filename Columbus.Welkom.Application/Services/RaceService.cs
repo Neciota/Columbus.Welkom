@@ -146,7 +146,7 @@ namespace Columbus.Welkom.Application.Services
         {
             RaceEntity race = await _raceRepository.GetByCodeAsync(code);
 
-            Settings settings = await _settingsProvider.GetSettingsAsync();
+            RaceSettings settings = await _settingsProvider.GetSettingsAsync();
             RacePointsSettings racePointsSettings = settings.RacePointsSettings.FirstOrDefault(rps => rps.RaceType == race.Type, new());
 
             return race.ToRace(racePointsSettings.PointsQuotient, racePointsSettings.MaxPoints, racePointsSettings.MinPoints);
