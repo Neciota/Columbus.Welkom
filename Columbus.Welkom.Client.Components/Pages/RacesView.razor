@@ -1,0 +1,120 @@
+﻿@page "/races"
+@using Columbus.Welkom.Application.Models
+@using Columbus.Welkom.Application.Models.ViewModels
+@using Columbus.Welkom.Application.Providers
+@using Columbus.Welkom.Application.Services.Interfaces
+@inject IRaceService RaceService
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+
+<RadzenStack AlignItems="AlignItems.Start" Orientation="Orientation.Vertical">
+    <RadzenText TextStyle="TextStyle.DisplayH6">
+        Vluchten
+    </RadzenText>
+
+    <RadzenStack Orientation="Orientation.Horizontal">
+        <RadzenButton Text="W-Bestanden"
+                      ButtonStyle="ButtonStyle.Primary"
+                      ButtonType="ButtonType.Button"
+                      Icon="drive_folder_upload"
+                      Click="ReadDirectory" />
+
+        <RadzenButton Text="W-Bestand"
+                      ButtonStyle="ButtonStyle.Secondary"
+                      ButtonType="ButtonType.Button"
+                      Icon="upload_file"
+                      Click="ReadFile" />
+    </RadzenStack>
+
+
+    <RadzenDataGrid Data="_races" IsLoading="_isLoading" EmptyText="Geen vluchten gevonden.">
+        <Columns>
+            <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.Code)" Title="Code" />
+            <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.Name)" Title="Naam" />
+            <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.StartTime)" FormatString="{0:d-M-yyyy HH:mm:ss}" Title="Lostijd" />
+            <RadzenDataGridColumn TItem="SimpleRace" Title="Lengtegraad">
+                <Template Context="race">
+                    @($"{race.Location.Longitude:F2}")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="SimpleRace" Title="Breedtegraad">
+                <Template Context="race">
+                    @($"{race.Location.Lattitude:F2}")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.OwnerCount)" Title="Leden" />
+            <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.PigeonCount)" Title="Duiven" />
+            <RadzenDataGridColumn TItem="SimpleRace" Width="100px">
+                <Template Context="race">
+                    <RadzenButton ButtonStyle="ButtonStyle.Info" Icon="info" Click="(() => GoToRace(race.Code))" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Click="(() => DeleteRace(race))" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenStack>
+
+@code {
+    [CascadingParameter(Name = "Club")]
+    public int Club { get; set; }
+    [CascadingParameter(Name = "Year")]
+    public int Year { get; set; }
+
+    private IEnumerable<SimpleRace> _races = [];
+    private bool _isLoading = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        _races = await RaceService.GetAllRacesAsync();
+    }
+
+    private async Task ReadDirectory()
+    {
+        _isLoading = true;
+
+        try
+        {
+            IEnumerable<Race> races = await RaceService.ReadRacesAsync();
+            await RaceService.OverwriteRacesAsync(races);
+            _races = await RaceService.GetAllRacesAsync();
+        } catch (JSException)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Fout", "Bestand kon niet worden geladen.");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task ReadFile()
+    {
+        _isLoading = true;
+
+        try
+        {
+            Race? newRace = await RaceService.ReadRaceAsync();
+            if (newRace is null)
+                return;
+
+            await RaceService.StoreRaceAsync(newRace);
+            _races = await RaceService.GetAllRacesAsync();
+        } catch (JSException)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Fout", "Bestand kon niet worden geladen.");
+        } finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task DeleteRace(SimpleRace race)
+    {
+        await RaceService.DeleteRaceByCodeAsync(race.Code);
+        _races = await RaceService.GetAllRacesAsync();
+    }
+
+    private void GoToRace(string raceCode) => NavigationManager.NavigateTo($"/race/{raceCode}");
+}

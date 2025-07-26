@@ -1,0 +1,193 @@
+﻿@page "/pigeonswap"
+@using Columbus.Welkom.Application.Models
+@using Columbus.Welkom.Application.Models.ViewModels
+@using Columbus.Welkom.Application.Services.Interfaces
+@inject IOwnerService OwnerService
+@inject IPigeonSwapService PigeonSwapService
+@inject IRaceService RaceService
+
+<RadzenStack AlignItems="AlignItems.Start" Orientation="Orientation.Vertical">
+    <RadzenText TextStyle="TextStyle.DisplayH6">
+        Duivenwissel
+    </RadzenText>
+
+    <RadzenStack Orientation="Orientation.Horizontal">
+        <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                      Text="Koppel Toevoegen"
+                      Icon="playlist_add"
+                      Click="AddPigeonSwapPair" />
+
+        <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                      Text="Exporteren naar PDF"
+                      Icon="picture_as_pdf"
+                      Click="ExportToPdf" />
+    </RadzenStack>
+
+
+
+    <RadzenDataGrid Data="_pigeonSwapPairs"
+                    EmptyText="Geen duivenwisselkoppels gevonden."
+                    IsLoading="_isLoading"
+                    @ref="_pigeonSwapGrid">
+        <Columns>
+            <RadzenDataGridColumn TItem="PigeonSwapPair" Title="Zetter" Property="Player">
+                <EditTemplate Context="pigeonSwapPair">
+                    <RadzenDropDown TValue="Owner"
+                                    Data="_allOwners"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    FilterOperator="StringFilterOperator.Contains"
+                                    AllowFiltering="true"
+                                    @bind-Value="pigeonSwapPair.Player"
+                                    Change="@(() => HandlePlayerChange(pigeonSwapPair))"
+                                    class="rz-w-100">
+                        <Template Context="possibleOwner">
+                            @((possibleOwner as Owner)!.Id): @((possibleOwner as Owner)!.Name)
+                        </Template>
+                    </RadzenDropDown>
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PigeonSwapPair" Title="Eigenaar" Property="Owner">
+                <EditTemplate Context="pigeonSwapPair">
+                    <RadzenDropDown TValue="Owner"
+                                    Data="_allOwners"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    FilterOperator="StringFilterOperator.Contains"
+                                    AllowFiltering="true"
+                                    @bind-Value="pigeonSwapPair.Owner"
+                                    class="rz-w-100">
+                        <Template Context="possibleOwner">
+                            @((possibleOwner as Owner)!.Id): @((possibleOwner as Owner)!.Name)
+                        </Template>
+                    </RadzenDropDown>
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PigeonSwapPair" Title="Duif" Property="Pigeon">
+                <EditTemplate Context="pigeonSwapPair">
+                    <RadzenDropDown TValue="Pigeon"
+                                    Data="SelectablePigeons(pigeonSwapPair.Owner)"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    FilterOperator="StringFilterOperator.Contains"
+                                    AllowFiltering="true"
+                                    @bind-Value="pigeonSwapPair.Pigeon"
+                                    Change="@(() => HandlePigeonChange(pigeonSwapPair))"
+                                    class="rz-w-100" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PigeonSwapPair" Title="Gekoppelde Liefhebber" Property="CoupledPlayer">
+                <EditTemplate Context="pigeonSwapPair">
+                    <RadzenDropDown TValue="Owner"
+                                    Data="_allOwners"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    FilterOperator="StringFilterOperator.Contains"
+                                    AllowFiltering="true"
+                                    @bind-Value="pigeonSwapPair.CoupledPlayer"
+                                    Change="@(() => HandleCoupledPlayerChange(pigeonSwapPair))"
+                                    class="rz-w-100">
+                        <Template Context="possibleOwner">
+                            @((possibleOwner as Owner)!.Id): @((possibleOwner as Owner)!.Name)
+                        </Template>
+                    </RadzenDropDown>
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            @foreach (SimpleRace race in _races)
+            {
+                <RadzenDataGridColumn TItem="PigeonSwapPair" Title="@race.Name" Width="100px">
+                    <Template>
+                        @context.RacePoints?.FirstOrDefault(rp => rp.Key.Code == race.Code).Value
+                    </Template>
+                </RadzenDataGridColumn>
+            }
+            <RadzenDataGridColumn TItem="PigeonSwapPair" Title="Totaal" Property="Points" Width="100px" />
+            <RadzenDataGridColumn TItem="PigeonSwapPair" Width="100px" TextAlign="TextAlign.Center">
+                <Template Context="pigeonSwapPair">
+                    <RadzenButton ButtonStyle="ButtonStyle.Info"
+                                  Icon="edit"
+                                  Click="() => EditRow(pigeonSwapPair)" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                      Icon="delete"
+                                      Click="@(() => DeletePigeonSwapPair(pigeonSwapPair))" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenStack>
+
+@code {
+    [CascadingParameter(Name = "Club")]
+    public int Club { get; set; }
+    [CascadingParameter(Name = "Year")]
+    public int Year { get; set; }
+
+    private bool _isLoading = false;
+    private RadzenDataGrid<PigeonSwapPair> _pigeonSwapGrid = null!;
+    private IEnumerable<Owner> _allOwners = null!;
+    private IEnumerable<PigeonSwapPair> _pigeonSwapPairs = null!;
+    private IEnumerable<SimpleRace> _races = new List<SimpleRace>();
+    private List<PigeonSwapPair> _rowsToUpdate = new List<PigeonSwapPair>();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        _isLoading = true;
+        _allOwners = await OwnerService.GetOwnersWithYearPigeonsAsync(Year, true);
+        _pigeonSwapPairs = await PigeonSwapService.GetPigeonSwapPairsAsync();
+        _races = await RaceService.GetAllRacesByTypeAsync(RaceType.Create('L'));
+
+        foreach (PigeonSwapPair pigeonSwapPair in _pigeonSwapPairs)
+            pigeonSwapPair.Owner!.Pigeons = _allOwners.First(o => o.Id == pigeonSwapPair.Owner.Id).Pigeons;
+
+        _isLoading = false;
+    }
+
+    private IEnumerable<Pigeon> SelectablePigeons(Owner? owner)
+    {
+        if (owner is null)
+            return new List<Pigeon>();
+
+        return owner.Pigeons.OrderBy(p => p.Id);
+    }
+
+    private async Task EditRow(PigeonSwapPair pigeonSwapPair)
+    {
+        _rowsToUpdate.Add(pigeonSwapPair);
+        await _pigeonSwapGrid.EditRow(pigeonSwapPair);
+    }
+
+    private async Task HandlePlayerChange(PigeonSwapPair pigeonSwapPair)
+    {
+        await PigeonSwapService.DeletePigeonSwapPairAsync(pigeonSwapPair);
+        pigeonSwapPair.Owner = pigeonSwapPair.Player;
+    }
+
+    private async Task HandlePigeonChange(PigeonSwapPair pigeonSwapPair)
+    {
+        if (pigeonSwapPair.Pigeon is null || pigeonSwapPair.CoupledPlayer is null)
+            return;
+
+        await PigeonSwapService.UpdatePigeonSwapPairAsync(Year, pigeonSwapPair);
+        _pigeonSwapPairs = await PigeonSwapService.GetPigeonSwapPairsAsync();
+    }
+
+    private async Task HandleCoupledPlayerChange(PigeonSwapPair pigeonSwapPair)
+    {
+        if (pigeonSwapPair.Pigeon is null || pigeonSwapPair.CoupledPlayer is null)
+            return;
+
+        await PigeonSwapService.UpdatePigeonSwapPairAsync(Year, pigeonSwapPair);
+        _pigeonSwapPairs = await PigeonSwapService.GetPigeonSwapPairsAsync();
+    }
+
+    private async Task DeletePigeonSwapPair(PigeonSwapPair pigeonSwapPair)
+    {
+        await PigeonSwapService.DeletePigeonSwapPairAsync(pigeonSwapPair);
+        _pigeonSwapPairs = _pigeonSwapPairs.Where(pair => pair != pigeonSwapPair);
+    }
+
+    private void AddPigeonSwapPair() => _pigeonSwapGrid.InsertRow(new PigeonSwapPair());
+
+    private async Task ExportToPdf()
+    {
+        await PigeonSwapService.ExportToPdf(_pigeonSwapPairs);
+    }
+}

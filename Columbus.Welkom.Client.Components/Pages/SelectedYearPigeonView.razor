@@ -1,0 +1,123 @@
+﻿@page "/selectedyearpigeon"
+@using Columbus.Welkom.Application.Models
+@using Columbus.Welkom.Application.Models.ViewModels
+@using Columbus.Welkom.Application.Services.Interfaces
+@inject IOwnerService OwnerService
+@inject ISelectedYearPigeonService SelectedYearPigeonService
+
+<RadzenStack AlignItems="AlignItems.Start" Orientation="Orientation.Vertical">
+    <RadzenText TextStyle="TextStyle.DisplayH6">
+        Tientjesduif
+    </RadzenText>
+
+    <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                  Text="Lid Toevoegen"
+                  Icon="playlist_add"
+                  Click="AddOwnerPigeonPair" />
+
+    <RadzenDataGrid Data="_ownerPigeonPairs" EmptyText="Geen tientjesduiven gevonden." @ref="_ownerPigeonGrid">
+        <Columns>
+            <RadzenDataGridColumn TItem="OwnerPigeonPair" Title="Lid">
+                <Template Context="ownerPigeonPair">
+                    @if (ownerPigeonPair.Owner is not null)
+                    {
+                        <span>@ownerPigeonPair.Owner.Id - @ownerPigeonPair.Owner.Name</span>
+                    }
+                </Template>
+                <EditTemplate Context="ownerPigeonPair">
+                    <RadzenDropDown TValue="Owner"
+                                    Data="SelectableOwners"
+                                    @bind-Value="ownerPigeonPair.Owner"
+                                    Change="@(() => HandleOwnerChange(ownerPigeonPair))"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    FilterOperator="StringFilterOperator.Contains"
+                                    AllowFiltering="true"
+                                    class="rz-w-100">
+                        <Template Context="possibleOwner">
+                            @((possibleOwner as Owner)!.Id) - @((possibleOwner as Owner)!.Name)
+                        </Template>
+                    </RadzenDropDown>
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="OwnerPigeonPair" Title="Duif">
+                <Template Context="ownerPigeonPair">
+                    @ownerPigeonPair.Pigeon?.Id
+                </Template>
+                <EditTemplate Context="ownerPigeonPair">
+                    <RadzenDropDown TValue="Pigeon"
+                                    Data="SelectablePigeons(ownerPigeonPair.Owner)"
+                                    @bind-Value="ownerPigeonPair.Pigeon"
+                                    Change="@(() => HandlePigeonChange(ownerPigeonPair))"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    FilterOperator="StringFilterOperator.Contains"
+                                    AllowFiltering="true"
+                                    class="rz-w-100" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="OwnerPigeonPair" Title="Punten" Property="@nameof(OwnerPigeonPair.Points)" />
+            <RadzenDataGridColumn TItem="OwnerPigeonPair" Width="60px">
+                <Template Context="ownerPigeonPair">
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                  Icon="delete"
+                                  Click="@(() => DeleteOwnerPigeonPair(ownerPigeonPair))" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenStack>
+
+@code {
+    [CascadingParameter(Name = "Club")]
+    public int Club { get; set; }
+    [CascadingParameter(Name = "Year")]
+    public int Year { get; set; }
+
+    private RadzenDataGrid<OwnerPigeonPair>? _ownerPigeonGrid;
+    private IEnumerable<Owner> _allOwners = [];
+    private IEnumerable<OwnerPigeonPair> _ownerPigeonPairs = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        _allOwners = await OwnerService.GetOwnersWithYearPigeonsAsync(Year - 1);
+        _ownerPigeonPairs = await SelectedYearPigeonService.GetOwnerPigeonPairsAsync();
+    }
+
+    private IEnumerable<Owner> SelectableOwners => _allOwners.ExceptBy(_ownerPigeonPairs.Select(opp => opp.Owner?.Id), o => o.Id);
+    private IEnumerable<Pigeon> SelectablePigeons(Owner? owner)
+    {
+        if (owner is null)
+            return Enumerable.Empty<Pigeon>();
+
+        return owner.Pigeons.OrderBy(o => o.Id);
+    }
+
+    private async Task HandleOwnerChange(OwnerPigeonPair ownerPigeonPair)
+    {
+        if (ownerPigeonPair.Pigeon is null)
+            return;
+
+        await SelectedYearPigeonService.DeleteOwnerPigeonPairByIdAsync(ownerPigeonPair.Id);
+
+        ownerPigeonPair.ResetOnOwnerChange();
+    }
+
+    private async Task HandlePigeonChange(OwnerPigeonPair ownerPigeonPair)
+    {
+        await SelectedYearPigeonService.UpdateAsync(ownerPigeonPair);
+        _ownerPigeonPairs = await SelectedYearPigeonService.GetOwnerPigeonPairsAsync();
+    }
+
+    private async Task DeleteOwnerPigeonPair(OwnerPigeonPair ownerPigeonPair)
+    {
+        _ownerPigeonPairs = _ownerPigeonPairs.Except([ownerPigeonPair]);
+
+        if (ownerPigeonPair.Id == 0)
+            return;
+
+        await SelectedYearPigeonService.DeleteOwnerPigeonPairByIdAsync(ownerPigeonPair.Id);
+    }
+
+    private void AddOwnerPigeonPair() => _ownerPigeonGrid?.InsertRow(new OwnerPigeonPair());
+}

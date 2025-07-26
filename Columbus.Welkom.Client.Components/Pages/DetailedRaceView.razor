@@ -1,0 +1,80 @@
+﻿@page "/race/{Code}"
+@using Columbus.Welkom.Application.Providers
+@using Columbus.Welkom.Application.Services.Interfaces
+@inject NavigationManager NavigationManager
+@inject IRaceService RaceService
+@inject SettingsProvider SettingsProvider
+
+<RadzenStack AlignItems="AlignItems.Start" Orientation="Orientation.Vertical" Visible="_race is not null">
+    <RadzenStack AlignItems="AlignItems.Center" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Style="width: 100%;">
+        <RadzenText TextStyle="TextStyle.DisplayH6" TextAlign="TextAlign.Center">
+            @_race?.ToString() gelost op @_race?.StartTime met @_race?.OwnerRaces.Count deelnemers en @_race?.PigeonRaces.Count duiven in concours.
+        </RadzenText>
+
+        <RadzenButton ButtonStyle="ButtonStyle.Secondary" Icon="arrow_back" Click="@(() => NavigationManager.NavigateTo("/races"))" Size="ButtonSize.Small" />
+    </RadzenStack>
+
+    <RadzenDataGrid Data="_race?.PigeonRaces" EmptyText="Geen duiven in vlucht.">
+        <Columns>
+            <RadzenDataGridColumn TItem="PigeonRace" Property="@nameof(PigeonRace.Position)" Title="Prs" Width="64px" />
+            <RadzenDataGridColumn TItem="PigeonRace" Property="@nameof(PigeonRace.Next)" Title="Vlg" Width="64px" />
+            <RadzenDataGridColumn TItem="PigeonRace" Title="Naam">
+                <Template>
+                    @GetOwnerRace(context).Owner.Name
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PigeonRace" Title="Mee" Width="60px">
+                <Template>
+                    @GetOwnerRace(context).Count
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PigeonRace" Property="@nameof(PigeonRace.Mark)" Title="Get" Width="60px" />
+            <RadzenDataGridColumn TItem="PigeonRace" Title="Afstand">
+                <Template>
+                    @((GetOwnerRace(context).Distance / 1000).ToString("F3"))
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PigeonRace" Property="@nameof(PigeonRace.Pigeon)" Title="Ringnummer">
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PigeonRace" Title="Zuiver">
+                <Template>
+                    @context.ArrivalTime?.ToString("HH:mm:ss")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PigeonRace" Title="Snelheid">
+                <Template>
+                    @context.GetSpeed(GetOwnerRace(context).Distance, _race.StartTime, TimeSpan.Zero, _neutralizationTime).MetersPerMinute.ToString("F3")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PigeonRace" Property="@nameof(PigeonRace.Points)" Title="Punten" Width="100px" />
+        </Columns>
+    </RadzenDataGrid>
+</RadzenStack>
+
+@code {
+    [CascadingParameter(Name = "Club")]
+    public int Club { get; set; }
+    [CascadingParameter(Name = "Year")]
+    public int Year { get; set; }
+    [Parameter]
+    public string? Code { get; set; }
+
+    private Race? _race;
+    private INeutralizationTime _neutralizationTime = new NoNeutralization();
+    private Dictionary<PigeonRace, OwnerRace> _ownerRaces = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if (Code is null)
+            return;
+
+        _race = await RaceService.GetRaceByCodeAsync(Code);
+        _ownerRaces = _race.PigeonRaces.ToDictionary(pr => pr, pr => _race.OwnerRaces.First(or => or.Owner.Pigeons.Contains(pr.Pigeon)));
+
+        RaceSettings raceSettings = await SettingsProvider.GetSettingsAsync();
+        _neutralizationTime = raceSettings.GetNeutralizationTimeForRaceType(_race.Type, Year);
+    }
+
+    private OwnerRace GetOwnerRace(PigeonRace pigeonRace) => _ownerRaces[pigeonRace];
+}

@@ -1,0 +1,69 @@
+﻿@page "/"
+@using Columbus.UDP.Interfaces;
+@using Columbus.Welkom.Application.Providers
+@using Columbus.Welkom.Application.Services.Interfaces
+@inject NotificationService NotificationService
+@inject IOwnerService OwnerService
+
+<RadzenStack AlignItems="AlignItems.Start" Orientation="Orientation.Vertical">
+    <RadzenText TextStyle="TextStyle.DisplayH6">
+        Leden
+    </RadzenText>
+
+    <RadzenButton Text="Ledenbestand"
+                  ButtonStyle="ButtonStyle.Primary"
+                  ButtonType="ButtonType.Button"
+                  IsBusy="_isUploading"
+                  Icon="upload_file"
+                  Click="ReadFile" />
+
+    <RadzenDataGrid Data="_owners" EmptyText="Geen leden gevonden." IsLoading="_isLoading">
+        <Columns>
+            <RadzenDataGridColumn TItem="Owner" Title="Lidnummer" Property="@nameof(Owner.Id)" />
+            <RadzenDataGridColumn TItem="Owner" Title="Naam" Property="@nameof(Owner.Name)" />
+            <RadzenDataGridColumn TItem="Owner" Title="Duiven">
+                <Template>
+                    @context.Pigeons.Count
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenStack>
+
+@code {
+    [CascadingParameter(Name = "Club")]
+    public int Club { get; set; }
+    [CascadingParameter(Name = "Year")]
+    public int Year { get; set; }
+
+    private IEnumerable<Owner> _owners = new List<Owner>();
+    private bool _isLoading = false;
+    private bool _isUploading = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _isLoading = true;
+        await base.OnParametersSetAsync();
+
+        _owners = await OwnerService.GetOwnersWithAllPigeonsAsync();
+        _isLoading = false;
+    }
+
+    private async Task ReadFile()
+    {
+        _isUploading = true;
+        try
+        {
+            _owners = await OwnerService.ReadOwnersFromFileAsync();
+            await OwnerService.OverwriteOwnersAsync(_owners);
+        }
+        catch (JSException)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Fout", "Bestand kon niet worden geladen.");
+            return;
+        } finally
+        {
+            _isUploading = false;
+        }
+    }
+}
