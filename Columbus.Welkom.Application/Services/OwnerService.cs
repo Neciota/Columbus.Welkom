@@ -24,7 +24,7 @@ namespace Columbus.Welkom.Application.Services
 
         public async Task<IEnumerable<Owner>> ReadOwnersFromFileAsync()
         {
-            StreamReader? stream = await _filePicker.OpenFileAsync([".udp"]);
+            (StreamReader? stream, string fileName) = await _filePicker.OpenFileAsync([".udp"]);
             if (stream is null)
                 return [];
 

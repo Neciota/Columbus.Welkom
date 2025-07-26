@@ -8,8 +8,6 @@ using Columbus.Welkom.Application.Providers;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
 using Microsoft.Extensions.Options;
-using System.Diagnostics;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Columbus.Welkom.Application.Services
@@ -23,6 +21,7 @@ namespace Columbus.Welkom.Application.Services
         private readonly IRaceRepository _raceRepository;
         private readonly IRaceSerializer _raceSerializer;
         private readonly SettingsProvider _settingsProvider;
+        private readonly IOptions<AppSettings> _appSettings;
 
         public RaceService(
             IFilePicker filePicker, 
@@ -31,7 +30,8 @@ namespace Columbus.Welkom.Application.Services
             IPigeonRaceRepository pigeonRaceRepository, 
             IRaceRepository raceRepository, 
             IRaceSerializer raceSerializer,
-            SettingsProvider settingsProvider)
+            SettingsProvider settingsProvider,
+            IOptions<AppSettings> appSettings)
         {
             _filePicker = filePicker;
             _ownerRepository = ownerRepository;
@@ -40,22 +40,29 @@ namespace Columbus.Welkom.Application.Services
             _raceRepository = raceRepository;
             _raceSerializer = raceSerializer;
             _settingsProvider = settingsProvider;
+            _appSettings = appSettings;
         }
 
         public async Task<Race?> ReadRaceAsync()
         {
-            StreamReader? streamReader = await _filePicker.OpenFileAsync([".udp"]);
+            (StreamReader? streamReader, string fileName) = await _filePicker.OpenFileAsync([".udp"]);
             if (streamReader is null)
                 return null;
 
-            return await _raceSerializer.DeserializeAsync(streamReader);
+            RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
+            Dictionary<RaceType, INeutralizationTime> neutralizationTimes = raceSettings.GetNeutralizationTimesByRaceType(_appSettings.Value.Year);
+
+            return await _raceSerializer.DeserializeAsync(streamReader, neutralizationTimes[RaceType.Create(fileName[1])]);
         }
 
         public async Task<IEnumerable<Race>> ReadRacesAsync()
         {
-            IEnumerable<StreamReader> streamReaders = await _filePicker.OpenFilesAsync([".udp"], new Regex(@$"2151.udp"));
+            IEnumerable<(StreamReader StreamReader, string FileName)> files = await _filePicker.OpenFilesAsync([".udp"], new Regex(@$"W...{_appSettings.Value.Club}.udp"));
 
-            return await Task.WhenAll(streamReaders.AsParallel().Select(_raceSerializer.DeserializeAsync));
+            RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
+            Dictionary<RaceType, INeutralizationTime> neutralizationTimes = raceSettings.GetNeutralizationTimesByRaceType(_appSettings.Value.Year);
+
+            return await Task.WhenAll(files.AsParallel().Select(s => _raceSerializer.DeserializeAsync(s.StreamReader, neutralizationTimes[RaceType.Create(s.FileName[1])])));
         }
 
         public async Task<IEnumerable<SimpleRace>> GetAllRacesAsync()
@@ -148,8 +155,9 @@ namespace Columbus.Welkom.Application.Services
 
             RaceSettings settings = await _settingsProvider.GetSettingsAsync();
             RacePointsSettings racePointsSettings = settings.RacePointsSettings.FirstOrDefault(rps => rps.RaceType == race.Type, new());
+            INeutralizationTime neutralizationTime = settings.GetNeutralizationTimeForRaceType(race.Type, _appSettings.Value.Year);
 
-            return race.ToRace(racePointsSettings.PointsQuotient, racePointsSettings.MaxPoints, racePointsSettings.MinPoints);
+            return race.ToRace(racePointsSettings.PointsQuotient, racePointsSettings.MaxPoints, racePointsSettings.MinPoints, racePointsSettings.DecimalCount, neutralizationTime);
         }
 
         public async Task DeleteRaceByCodeAsync(string code)

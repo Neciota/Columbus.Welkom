@@ -13,8 +13,11 @@
                             <RadzenColumn Size="2">
                                 @raceType.RaceType.ToString()
                             </RadzenColumn>
-                            <RadzenColumn Size="9">
+                            <RadzenColumn Size="7">
                                 @raceType.Description
+                            </RadzenColumn>
+                            <RadzenColumn Size="2">
+                                @GetNeutralizationTimeDisplay(raceType.NeutralizationType)
                             </RadzenColumn>
                             <RadzenColumn Size="1">
                                 <RadzenButton Icon="delete"
@@ -39,8 +42,18 @@
                             </ValueTemplate>
                         </RadzenDropDown>
                     </RadzenColumn>
-                    <RadzenColumn Size="9">
+                    <RadzenColumn Size="7">
                         <RadzenTextBox @bind-Value="_newRaceType.Description" class="rz-w-100" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="2">
+                        <RadzenDropDown Data="Enum.GetValues<NeutralizationType>()" @bind-Value="_newRaceType.NeutralizationType">
+                            <Template Context="neutralizationType">
+                                @GetNeutralizationTimeDisplay(neutralizationType)
+                            </Template>
+                            <ValueTemplate Context="neutralizationType">
+                                @GetNeutralizationTimeDisplay(neutralizationType)
+                            </ValueTemplate>
+                        </RadzenDropDown>
                     </RadzenColumn>
                     <RadzenColumn Size="1">
                         <RadzenButton Icon="add"
@@ -158,19 +171,15 @@
         </RadzenFieldset>
 
         <RadzenFieldset Text="Punten" AllowCollapse="true" Collapsed="false">
+            <RadzenTabs Change="OnSelectedRaceTypeChange">
+                <Tabs>
+                    @foreach (RaceType raceType in RaceTypes)
+                    {
+                        <RadzenTabsItem Text="@raceType.ToString()" />
+                    }
+                </Tabs>
+            </RadzenTabs>
             <RadzenStack Orientation="Orientation.Vertical">
-                <RadzenRow AlignItems="AlignItems.Center">
-                    <RadzenColumn Size="12" SizeMD="6">
-                        Vluchttype
-                    </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenDropDown Data="RaceTypes"
-                                        @bind-Value="_selectedRaceType"
-                                        Change="OnSelectedRaceTypeChange"
-                                        class="rz-w-100" />
-                    </RadzenColumn>
-                </RadzenRow>
-
                 <RadzenRow AlignItems="AlignItems.Center">
                     <RadzenColumn Size="12" SizeMD="6">
                         Prijzendeler (1 op n)
@@ -178,7 +187,6 @@
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenNumeric @bind-Value="_racePointsSettings.PointsQuotient"
                                        TValue="int"
-                                       Disabled="!_selectedRaceType.HasValue"
                                        Change="ChangePointSettingsAsync"
                                        class="rz-w-100" />
                     </RadzenColumn>
@@ -191,7 +199,6 @@
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenNumeric @bind-Value="_racePointsSettings.MaxPoints"
                                        TValue="int"
-                                       Disabled="!_selectedRaceType.HasValue"
                                        Change="ChangePointSettingsAsync"
                                        class="rz-w-100" />
                     </RadzenColumn>
@@ -204,7 +211,6 @@
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenNumeric @bind-Value="_racePointsSettings.MinPoints"
                                        TValue="int"
-                                       Disabled="!_selectedRaceType.HasValue"
                                        Change="ChangePointSettingsAsync"
                                        class="rz-w-100" />
                     </RadzenColumn>
@@ -218,7 +224,6 @@
                         <RadzenNumeric @bind-Value="_racePointsSettings.DecimalCount"
                                        TValue="int"
                                        Change="ChangePointSettingsAsync"
-                                       Disabled="!_selectedRaceType.HasValue"
                                        class="rz-w-100" />
                     </RadzenColumn>
                 </RadzenRow>
@@ -234,7 +239,7 @@
     public int Year { get; set; }
 
     private RaceSettings _settings = new();
-    private RaceType? _selectedRaceType;
+    private RaceType _selectedRaceType;
 
     private RaceTypeDescription _newRaceType = new();
 
@@ -248,14 +253,13 @@
         await base.OnInitializedAsync();
 
         _settings = await SettingService.GetSettingsAsync();
+        OnSelectedRaceTypeChange(0);
     }
 
-    private void OnSelectedRaceTypeChange()
+    private void OnSelectedRaceTypeChange(int raceTypeIndex)
     {
-        if (_selectedRaceType is null)
-            return;
-
-        _racePointsSettings = _settings.RacePointsSettings.FirstOrDefault(rps => rps.RaceType == _selectedRaceType) ?? new() { RaceType = _selectedRaceType.Value };
+        _selectedRaceType = RaceTypes.ElementAt(raceTypeIndex);
+        _racePointsSettings = _settings.RacePointsSettings.FirstOrDefault(rps => rps.RaceType == _selectedRaceType) ?? new() { RaceType = _selectedRaceType };
     }
 
     private async Task AddRaceTypeAsync()
@@ -297,4 +301,10 @@
     {
         await SettingService.ImportAsync();
     }
+
+    private RenderFragment GetNeutralizationTimeDisplay(NeutralizationType neutralizationType) => neutralizationType switch
+    {
+        NeutralizationType.Nf14 =>@<text>NF-14</text>,
+        _ =>@<text>-</text>,
+    };
 }

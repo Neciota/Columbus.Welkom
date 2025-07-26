@@ -30,7 +30,7 @@ namespace Columbus.Welkom.Application.Models.Entities
 
         public ICollection<PigeonRaceEntity> PigeonRaces { get; set; } = [];
 
-        public Race ToRace(int pointsQuotient, int maxPoints, int minPoints)
+        public Race ToRace(int pointsQuotient, int maxPoints, int minPoints, int decimalPlaces, INeutralizationTime neutralizationTime)
         {
             if (PigeonRaces.Any(pr => pr.Pigeon is null))
                 throw new InvalidOperationException("Pigeon on PigeonProperty cannot be null");
@@ -45,7 +45,7 @@ namespace Columbus.Welkom.Application.Models.Entities
                 .Select(o => new OwnerRace(o.ToOwner(), startLocation, PigeonRaces.Count(pr => pr.Pigeon!.OwnerId == o.OwnerId), TimeSpan.Zero))
                 .ToDictionary(or => or.Owner.Id);
             IList<PigeonRace> pigeonRaces = PigeonRaces.Select(pr => pr.ToPigeonRace(pr.Pigeon!.Owner!.OwnerId))
-                .OrderByDescending(pr => pr.GetSpeed(ownerRaces[pr.OwnerId].Distance, StartTime, ownerRaces[pr.OwnerId].ClockDeviation))
+                .OrderByDescending(pr => pr.GetSpeed(ownerRaces[pr.OwnerId].Distance, StartTime, ownerRaces[pr.OwnerId].ClockDeviation, neutralizationTime))
                 .ToList();
 
             return new Race(
@@ -59,7 +59,8 @@ namespace Columbus.Welkom.Application.Models.Entities
                 pigeonRaces,
                 pointsQuotient,
                 maxPoints,
-                minPoints);
+                minPoints,
+                decimalPlaces);
         }
 
         public SimpleRace ToSimpleRace()

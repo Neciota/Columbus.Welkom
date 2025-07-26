@@ -2,6 +2,7 @@
 using Columbus.Models.Race;
 using Columbus.Welkom.Application.Models.Entities;
 using Columbus.Welkom.Application.Models.ViewModels;
+using Columbus.Welkom.Application.Providers;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
 using Microsoft.Extensions.Options;
@@ -13,32 +14,37 @@ namespace Columbus.Welkom.Application.Services
         private readonly IPigeonRepository _pigeonRepository;
         private readonly IRaceRepository _raceRepository;
         private readonly ISelectedYearPigeonRepository _selectedYearPigeonRepository;
-        private readonly RacePointsSettings _racePointsSettings;
+        private readonly SettingsProvider _settingsProvider;
+        private readonly IOptions<AppSettings> _appSettings;
 
         public SelectedYearPigeonService(
             IPigeonRepository pigeonRepository, 
             IRaceRepository raceRepository, 
             ISelectedYearPigeonRepository selectedYearPigeonRepository,
-            IOptions<RacePointsSettings> racePointSettings)
+            SettingsProvider settingsProvider,
+            IOptions<AppSettings> appSettings)
         {
             _pigeonRepository = pigeonRepository;
             _raceRepository = raceRepository;
             _selectedYearPigeonRepository = selectedYearPigeonRepository;
-            _racePointsSettings = racePointSettings.Value;
+            _settingsProvider = settingsProvider;
+            _appSettings = appSettings;
         }
 
         public async Task<IEnumerable<OwnerPigeonPair>> GetOwnerPigeonPairsAsync()
         {
             IEnumerable<SelectedYearPigeonEntity> selectedYearPigeonEntities = await _selectedYearPigeonRepository.GetAllAsync();
-            IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync([ 
-                RaceType.Create('V'),
-                RaceType.Create('M'),
-                RaceType.Create('E'),
-                RaceType.Create('O'),
-                RaceType.Create('X'),
-                RaceType.Create('N')
-            ]);
-            IEnumerable<Race> races = raceEntities.Select(re => re.ToRace(_racePointsSettings.PointsQuotient, _racePointsSettings.MaxPoints, _racePointsSettings.MinPoints));
+            RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
+            Dictionary<RaceType, RacePointsSettings> racePointsSettingsByRaceType = raceSettings.RacePointsSettings.ToDictionary(rps => rps.RaceType);
+            Dictionary<RaceType, INeutralizationTime> neutralizationTimesByRaceType = raceSettings.GetNeutralizationTimesByRaceType(_appSettings.Value.Year);
+
+            IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync(raceSettings.AppliedRaceTypes.SelectedYearPigeonRaceTypes.ToArray());
+            IEnumerable<Race> races = raceEntities.Select(re => re.ToRace(
+                racePointsSettingsByRaceType[re.Type].PointsQuotient, 
+                racePointsSettingsByRaceType[re.Type].MaxPoints, 
+                racePointsSettingsByRaceType[re.Type].MinPoints, 
+                racePointsSettingsByRaceType[re.Type].DecimalCount,
+                neutralizationTimesByRaceType[re.Type]));
 
             List<OwnerPigeonPair> ownerPigeonPairs = selectedYearPigeonEntities.Select(syp => new OwnerPigeonPair(syp.Owner!.ToOwner(), syp.Pigeon!.ToPigeon()))
                 .ToList();

@@ -23,25 +23,25 @@ public class FilePicker : IFilePicker
         return fileResults.Select(f => f.FullPath);
     }
 
-    public async Task<StreamReader?> OpenFileAsync(string[] fileTypes)
+    public async Task<(StreamReader?, string)> OpenFileAsync(string[] fileTypes)
     {
         FileResult? fileResult = await GetFileAsync(fileTypes);
         if (fileResult is null)
-            return null;
+            return (null, string.Empty);
 
         Stream stream = await fileResult.OpenReadAsync();
-        return new StreamReader(stream, Encoding.Latin1, false, FileBufferSize);
+        return (new StreamReader(stream, Encoding.Latin1, false, FileBufferSize), fileResult.FileName);
     }
 
-    public async Task<IEnumerable<StreamReader>> OpenFilesAsync(string[] fileTypes, Regex? nameMustMatch = null)
+    public async Task<IEnumerable<(StreamReader, string)>> OpenFilesAsync(string[] fileTypes, Regex? nameMustMatch = null)
     {
         IEnumerable<FileResult> fileResult = await GetFilesAsync(fileTypes);
 
         if (nameMustMatch is not null)
             fileResult = fileResult.Where(f => nameMustMatch.IsMatch(f.FileName));
 
-        return (await Task.WhenAll(fileResult.Select(async f => await f.OpenReadAsync())))
-            .Select(f => new StreamReader(f, Encoding.Latin1, false, FileBufferSize));
+        return (await Task.WhenAll(fileResult.Select(async f => (await f.OpenReadAsync(), f.FileName))))
+            .Select(f => (new StreamReader(f.Item1, Encoding.Latin1, false, FileBufferSize), f.FileName));
     }
 
     private static async Task<FileResult?> GetFileAsync(string[] fileTypes)

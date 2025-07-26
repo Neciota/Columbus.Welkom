@@ -17,28 +17,41 @@ namespace Columbus.Welkom.Application.Services
         private readonly IPigeonRepository _pigeonRepository;
         private readonly IPigeonSwapRepository _pigeonSwapRepository;
         private readonly IRaceRepository _raceRepository;
-        private readonly RacePointsSettings _racePointsSettings;
+        private readonly SettingsProvider _settingsProvider;
+        private readonly IOptions<AppSettings> _appSettings;
 
         public PigeonSwapService(
             IFilePicker fileProvider, 
             IPigeonRepository pigeonRepository, 
             IPigeonSwapRepository pigeonSwapRepository, 
             IRaceRepository raceRepository,
-            IOptions<RacePointsSettings> racePointsSettings)
+            SettingsProvider settingsProvider,
+            IOptions<AppSettings> appSettings)
         {
             _filePicker = fileProvider;
             _pigeonRepository = pigeonRepository;
             _pigeonSwapRepository = pigeonSwapRepository;
             _raceRepository = raceRepository;
-            _racePointsSettings = racePointsSettings.Value;
+            _settingsProvider = settingsProvider;
+            _appSettings = appSettings;
         }
 
         public async Task<IEnumerable<PigeonSwapPair>> GetPigeonSwapPairsAsync()
         {
             IEnumerable<PigeonSwapEntity> pigeonSwapEntities = await _pigeonSwapRepository.GetAllWithOwnersAndPigeonAsync();
 
-            IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync([RaceType.Create('L')]);
-            IEnumerable<Race> races = raceEntities.Select(r => r.ToRace(_racePointsSettings.PointsQuotient, _racePointsSettings.MaxPoints, _racePointsSettings.MinPoints));
+            RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
+            Dictionary<RaceType, RacePointsSettings> pointSettingsByRaceType = raceSettings.RacePointsSettings.ToDictionary(rps => rps.RaceType);
+            Dictionary<RaceType, RaceTypeDescription> raceTypeDescriptionsByRaceType = raceSettings.RaceTypeDescriptions.ToDictionary(rtd => rtd.RaceType);
+            Dictionary<RaceType, INeutralizationTime> neutralizationTimesByRaceType = raceSettings.GetNeutralizationTimesByRaceType(_appSettings.Value.Year);
+
+            IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync(raceSettings.AppliedRaceTypes.PigeonSwapRaceTypes.ToArray());
+            IEnumerable<Race> races = raceEntities.Select(r => r.ToRace(
+                pointSettingsByRaceType[r.Type].PointsQuotient, 
+                pointSettingsByRaceType[r.Type].MaxPoints, 
+                pointSettingsByRaceType[r.Type].MinPoints, 
+                pointSettingsByRaceType[r.Type].DecimalCount,
+                neutralizationTimesByRaceType[r.Type]));
 
             List<PigeonSwapPair> pigeonSwapPairs = pigeonSwapEntities.Select(ps => ps.ToPigeonSwapPair()).ToList();
 
