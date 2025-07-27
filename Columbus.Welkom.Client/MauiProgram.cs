@@ -10,6 +10,7 @@ using CommunityToolkit.Maui.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Debug;
 using Microsoft.Extensions.Options;
+using QuestPDF.Infrastructure;
 using Radzen;
 
 namespace Columbus.Welkom.Client
@@ -33,6 +34,8 @@ namespace Columbus.Welkom.Client
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "Columbus",
                 "Welkom");
+
+            QuestPDF.Settings.License = LicenseType.Community;
 
             Directory.CreateDirectory(appFolder);
 

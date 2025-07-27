@@ -1,11 +1,15 @@
-﻿using Columbus.Models.Pigeon;
+﻿using Columbus.Models;
+using Columbus.Models.Pigeon;
 using Columbus.Models.Race;
+using Columbus.Welkom.Application.Export;
+using Columbus.Welkom.Application.Models.DocumentModels;
 using Columbus.Welkom.Application.Models.Entities;
 using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Providers;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
 using Microsoft.Extensions.Options;
+using QuestPDF.Fluent;
 
 namespace Columbus.Welkom.Application.Services
 {
@@ -16,19 +20,22 @@ namespace Columbus.Welkom.Application.Services
         private readonly ISelectedYearPigeonRepository _selectedYearPigeonRepository;
         private readonly SettingsProvider _settingsProvider;
         private readonly IOptions<AppSettings> _appSettings;
+        private readonly IFilePicker _filePicker;
 
         public SelectedYearPigeonService(
             IPigeonRepository pigeonRepository, 
             IRaceRepository raceRepository, 
             ISelectedYearPigeonRepository selectedYearPigeonRepository,
             SettingsProvider settingsProvider,
-            IOptions<AppSettings> appSettings)
+            IOptions<AppSettings> appSettings, 
+            IFilePicker filePicker)
         {
             _pigeonRepository = pigeonRepository;
             _raceRepository = raceRepository;
             _selectedYearPigeonRepository = selectedYearPigeonRepository;
             _settingsProvider = settingsProvider;
             _appSettings = appSettings;
+            _filePicker = filePicker;
         }
 
         public async Task<IEnumerable<OwnerPigeonPair>> GetOwnerPigeonPairsAsync()
@@ -95,6 +102,25 @@ namespace Columbus.Welkom.Application.Services
                 throw new InvalidOperationException("No pair with this pigeon present.");
 
             await _selectedYearPigeonRepository.DeleteAsync(oldPair);
+        }
+
+        public async Task ExportAsync(IEnumerable<OwnerPigeonPair> ownerPigeonPairs)
+        {
+            RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
+            IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync(raceSettings.AppliedRaceTypes.SelectedYearPigeonRaceTypes.ToArray());
+
+            SelectedYearPigeon selectedYearPigeon = new()
+            {
+                ClubId = _appSettings.Value.Club,
+                Year = _appSettings.Value.Year,
+                OwnerPigeonPairs = ownerPigeonPairs,
+                RaceCodes = raceEntities.Select(re => re.Code)
+            };
+
+            SelectedYearPigeonDocument document = new(selectedYearPigeon);
+            byte[] pdf = document.GeneratePdf();
+
+            await _filePicker.SaveFileAsync("Tientjesduif.pdf", new MemoryStream(pdf));
         }
     }
 }
