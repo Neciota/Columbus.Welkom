@@ -178,6 +178,10 @@ namespace Columbus.Welkom.Application.Migrations
                         .HasColumnType("INTEGER")
                         .HasColumnName("ring_number");
 
+                    b.Property<int>("ArrivalOrder")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("arrival_order");
+
                     b.Property<DateTime?>("ArrivalTime")
                         .HasColumnType("TEXT")
                         .HasColumnName("arrival_time");

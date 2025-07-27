@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Columbus.Welkom.Application.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250719134907_Initial")]
+    [Migration("20250726221919_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -180,6 +180,10 @@ namespace Columbus.Welkom.Application.Migrations
                     b.Property<int>("_ringNumber")
                         .HasColumnType("INTEGER")
                         .HasColumnName("ring_number");
+
+                    b.Property<int>("ArrivalOrder")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("arrival_order");
 
                     b.Property<DateTime?>("ArrivalTime")
                         .HasColumnType("TEXT")

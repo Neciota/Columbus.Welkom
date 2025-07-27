@@ -37,6 +37,9 @@ public class PigeonRaceEntityConfiguration : IEntityTypeConfiguration<PigeonRace
         builder.Property(e => e.Mark)
             .HasColumnName("mark");
 
+        builder.Property(e => e.ArrivalOrder)
+            .HasColumnName("arrival_order");
+
         builder.Property(e => e.ArrivalTime)
             .HasColumnName("arrival_time");
     }

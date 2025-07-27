@@ -148,6 +148,7 @@ namespace Columbus.Welkom.Application.Migrations
                     year = table.Column<int>(type: "INTEGER", nullable: false),
                     ring_number = table.Column<int>(type: "INTEGER", nullable: false),
                     mark = table.Column<int>(type: "INTEGER", nullable: false),
+                    arrival_order = table.Column<int>(type: "INTEGER", nullable: false),
                     arrival_time = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>

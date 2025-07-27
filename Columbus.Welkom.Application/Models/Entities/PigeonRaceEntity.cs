@@ -10,12 +10,13 @@ namespace Columbus.Welkom.Application.Models.Entities
         private int _year;
         private RingNumber _ringNumber;
 
-        public PigeonRaceEntity(PigeonRace pigeonRace, string raceCode) : this()
+        public PigeonRaceEntity(PigeonRace pigeonRace, DateTime? submissionTime, DateTime? stopTime, TimeSpan clockDeviation, string raceCode) : this()
         {
             PigeonId = pigeonRace.Pigeon.Id;
             RaceCode = raceCode;
             Mark = pigeonRace.Mark;
-            ArrivalTime = pigeonRace.ArrivalTime;
+            ArrivalOrder = pigeonRace.ArrivalOrder;
+            ArrivalTime = pigeonRace.GetCorrectedArrivalTime(submissionTime, stopTime, clockDeviation);
         }
 
         public string RaceCode { get; set; } = string.Empty;
@@ -29,6 +30,7 @@ namespace Columbus.Welkom.Application.Models.Entities
             }
         }
         public int Mark { get; set; }
+        public int ArrivalOrder { get; set; }
         public DateTime? ArrivalTime { get; set; }
 
         public PigeonEntity? Pigeon { get; set; }
@@ -39,7 +41,7 @@ namespace Columbus.Welkom.Application.Models.Entities
             if (Pigeon is null)
                 throw new InvalidOperationException("Pigeon cannot be null");
 
-            return new PigeonRace(Pigeon.ToPigeon(), ownerId, ArrivalTime, Mark);
+            return new PigeonRace(Pigeon.ToPigeon(), ownerId, ArrivalTime, Mark, ArrivalOrder);
         }
     }
 }

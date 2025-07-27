@@ -1,4 +1,5 @@
-﻿using Columbus.Models.Owner;
+﻿using Columbus.Models;
+using Columbus.Models.Owner;
 using Columbus.Models.Pigeon;
 using Columbus.Models.Race;
 using Columbus.UDP.Interfaces;
@@ -8,6 +9,7 @@ using Columbus.Welkom.Application.Providers;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
 using Microsoft.Extensions.Options;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Columbus.Welkom.Application.Services
@@ -57,7 +59,7 @@ namespace Columbus.Welkom.Application.Services
 
         public async Task<IEnumerable<Race>> ReadRacesAsync()
         {
-            IEnumerable<(StreamReader StreamReader, string FileName)> files = await _filePicker.OpenFilesAsync([".udp"], new Regex(@$"W...{_appSettings.Value.Club}.udp"));
+            IEnumerable<(StreamReader StreamReader, string FileName)> files = await _filePicker.OpenFilesAsync([".udp"], new Regex(@"W...[0-9]{4}.udp"));
 
             RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
             Dictionary<RaceType, INeutralizationTime> neutralizationTimes = raceSettings.GetNeutralizationTimesByRaceType(_appSettings.Value.Year);
@@ -85,12 +87,27 @@ namespace Columbus.Welkom.Application.Services
         {
             await _raceRepository.DeleteRangeAsync();
 
+            ClubId club = ClubId.Create(_appSettings.Value.Club);
+            races = races.Where(r => r.OwnerRaces.Any(or => or.Owner.Id.HasClubId(club)));
+
+            IEnumerable<OwnerEntity> existingOwners = await _ownerRepository.GetByOwnerIdsAsync(races.SelectMany(r => r.OwnerRaces.Select(o => o.Owner.Id)));
+            HashSet<OwnerId> existingOwnerIds = existingOwners.Select(o => o.OwnerId).ToHashSet();
+
+            OwnerEntity[] ownersToAdd = races.SelectMany(r => r.OwnerRaces)
+                .ExceptBy(existingOwnerIds, or => or.Owner.Id)
+                .Select(or => new OwnerEntity(or.Owner))
+                .Where(or => or.OwnerId.HasClubId(club))
+                .ToArray();
+            await _ownerRepository.AddRangeAsync(ownersToAdd);
+            existingOwnerIds = existingOwnerIds.Concat(ownersToAdd.Select(o => o.OwnerId)).ToHashSet();
+
             IEnumerable<PigeonEntity> existingPigeons = await _pigeonRepository.GetByPigeonIdsAsync(races.SelectMany(r => r.PigeonRaces.Select(pr => pr.Pigeon.Id)));
             HashSet<PigeonId> existingPigeonIds = existingPigeons.Select(p => p.Id).ToHashSet();
 
             PigeonEntity[] pigeonsToAdd = races.SelectMany(r => r.PigeonRaces)
                 .ExceptBy(existingPigeonIds, pr => pr.Pigeon.Id)
                 .Select(pr => new PigeonEntity(pr.Pigeon, pr.OwnerId))
+                .Where(pr => existingOwnerIds.Contains(pr.OwnerId))
                 .ToArray();
             await _pigeonRepository.AddRangeAsync(pigeonsToAdd);
 
@@ -98,8 +115,12 @@ namespace Columbus.Welkom.Application.Services
                 .ToArray();
             await _raceRepository.AddRangeAsync(racesToAdd);
 
+            Dictionary<(OwnerId Owner, string RaceCode), OwnerRace> ownerRacesByOwnerAndRace = races.SelectMany(r => r.OwnerRaces.Select(or => (or, r)))
+                .ToDictionary(orr => (orr.or.Owner.Id, orr.r.Code), orr => orr.or);
+
             PigeonRaceEntity[] pigeonRacesToAdd = races.SelectMany(Race => Race.PigeonRaces.Select(PigeonRace => (PigeonRace, Race.Code)))
-                .Select(prr => new PigeonRaceEntity(prr.PigeonRace, prr.Code))
+                .Where(pr => existingOwnerIds.Contains(pr.PigeonRace.OwnerId))
+                .Select(prr => new PigeonRaceEntity(prr.PigeonRace, ownerRacesByOwnerAndRace[(prr.PigeonRace.OwnerId, prr.Code)].SubmissionAt, ownerRacesByOwnerAndRace[(prr.PigeonRace.OwnerId, prr.Code)].StoppedAt, ownerRacesByOwnerAndRace[(prr.PigeonRace.OwnerId, prr.Code)].ClockDeviation, prr.Code))
                 .ToArray();
 
             await _pigeonRaceRepository.AddRangeAsync(pigeonRacesToAdd);
@@ -117,7 +138,9 @@ namespace Columbus.Welkom.Application.Services
 
             RaceEntity addedRace = await _raceRepository.AddAsync(new RaceEntity(race));
 
-            IEnumerable<PigeonRaceEntity> pigeonRacesToAdd = race.PigeonRaces.Select(pr => new PigeonRaceEntity(pr, addedRace.Code));
+            Dictionary<OwnerId, OwnerRace> ownerRacesByOwner = race.OwnerRaces.ToDictionary(or => or.Owner.Id);
+
+            IEnumerable<PigeonRaceEntity> pigeonRacesToAdd = race.PigeonRaces.Select(pr => new PigeonRaceEntity(pr, ownerRacesByOwner[pr.OwnerId].SubmissionAt, ownerRacesByOwner[pr.OwnerId].StoppedAt, ownerRacesByOwner[pr.OwnerId].ClockDeviation, addedRace.Code));
             await _pigeonRaceRepository.AddRangeAsync(pigeonRacesToAdd);
         }
 

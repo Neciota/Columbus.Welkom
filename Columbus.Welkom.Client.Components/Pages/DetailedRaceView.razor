@@ -38,12 +38,12 @@
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="PigeonRace" Title="Zuiver">
                 <Template>
-                    @context.ArrivalTime?.ToString("HH:mm:ss")
+                    @context.GetCorrectedArrivalTime(null, null, TimeSpan.Zero)?.ToString("HH:mm:ss")
                 </Template>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="PigeonRace" Title="Snelheid">
                 <Template>
-                    @context.GetSpeed(GetOwnerRace(context).Distance, _race.StartTime, TimeSpan.Zero, _neutralizationTime).MetersPerMinute.ToString("F3")
+                    @context.GetSpeed(GetOwnerRace(context).Distance, _race.StartTime, null, null, TimeSpan.Zero, _neutralizationTime).MetersPerMinute.ToString("F3")
                 </Template>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="PigeonRace" Property="@nameof(PigeonRace.Points)" Title="Punten" Width="100px" />

@@ -42,10 +42,11 @@ namespace Columbus.Welkom.Application.Models.Entities
             Dictionary<OwnerId, OwnerRace> ownerRaces = PigeonRaces.Select(pr => pr.Pigeon!.Owner)
                 .Distinct()
                 .Cast<OwnerEntity>()
-                .Select(o => new OwnerRace(o.ToOwner(), startLocation, PigeonRaces.Count(pr => pr.Pigeon!.OwnerId == o.OwnerId), TimeSpan.Zero))
+                .Select(o => new OwnerRace(o.ToOwner(), startLocation, PigeonRaces.Count(pr => pr.Pigeon!.OwnerId == o.OwnerId), null, null, TimeSpan.Zero))
                 .ToDictionary(or => or.Owner.Id);
             IList<PigeonRace> pigeonRaces = PigeonRaces.Select(pr => pr.ToPigeonRace(pr.Pigeon!.Owner!.OwnerId))
-                .OrderByDescending(pr => pr.GetSpeed(ownerRaces[pr.OwnerId].Distance, StartTime, ownerRaces[pr.OwnerId].ClockDeviation, neutralizationTime))
+                .OrderByDescending(pr => pr.GetSpeed(ownerRaces[pr.OwnerId].Distance, StartTime, null, null, ownerRaces[pr.OwnerId].ClockDeviation, neutralizationTime))
+                .ThenBy(pr => pr.ArrivalOrder)
                 .ToList();
 
             return new Race(

@@ -15,7 +15,7 @@
                   Icon="playlist_add"
                   Click="AddOwnerPigeonPair" />
 
-    <RadzenDataGrid Data="_ownerPigeonPairs" EmptyText="Geen tientjesduiven gevonden." @ref="_ownerPigeonGrid">
+    <RadzenDataGrid Data="_ownerPigeonPairs" EmptyText="Geen tientjesduiven gevonden." @ref="_ownerPigeonGrid" IsLoading="_isLoading">
         <Columns>
             <RadzenDataGridColumn TItem="OwnerPigeonPair" Title="Lid">
                 <Template Context="ownerPigeonPair">
@@ -75,13 +75,21 @@
     private RadzenDataGrid<OwnerPigeonPair>? _ownerPigeonGrid;
     private IEnumerable<Owner> _allOwners = [];
     private IEnumerable<OwnerPigeonPair> _ownerPigeonPairs = [];
+    private bool _isLoading = false;
 
     protected override async Task OnParametersSetAsync()
     {
         await base.OnParametersSetAsync();
 
-        _allOwners = await OwnerService.GetOwnersWithYearPigeonsAsync(Year - 1);
-        _ownerPigeonPairs = await SelectedYearPigeonService.GetOwnerPigeonPairsAsync();
+        _isLoading = true;
+
+        await Task.Run(async () =>
+        {
+            _allOwners = await OwnerService.GetOwnersWithYearPigeonsAsync(Year - 1);
+            _ownerPigeonPairs = await SelectedYearPigeonService.GetOwnerPigeonPairsAsync();
+        });
+
+        _isLoading = false;
     }
 
     private IEnumerable<Owner> SelectableOwners => _allOwners.ExceptBy(_ownerPigeonPairs.Select(opp => opp.Owner?.Id), o => o.Id);
