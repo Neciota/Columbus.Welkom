@@ -258,6 +258,9 @@
 
     private void OnSelectedRaceTypeChange(int raceTypeIndex)
     {
+        if (!RaceTypes.Any())
+            return;
+
         _selectedRaceType = RaceTypes.ElementAt(raceTypeIndex);
         _racePointsSettings = _settings.RacePointsSettings.FirstOrDefault(rps => rps.RaceType == _selectedRaceType) ?? new() { RaceType = _selectedRaceType };
     }
