@@ -44,6 +44,14 @@ namespace Columbus.Welkom.Application.Repositories
             return entity;
         }
 
+        public virtual async Task<IEnumerable<T>> UpdateRangeAsync(IEnumerable<T> entities)
+        {
+            _context.UpdateRange(entities);
+            await _context.SaveChangesAsync();
+
+            return entities;
+        }
+
         public virtual async Task<bool> DeleteAsync(T entity)
         {
             _context.Remove(entity);

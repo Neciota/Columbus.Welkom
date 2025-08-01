@@ -102,14 +102,22 @@ namespace Columbus.Welkom.Application.Services
             existingOwnerIds = existingOwnerIds.Concat(ownersToAdd.Select(o => o.OwnerId)).ToHashSet();
 
             IEnumerable<PigeonEntity> existingPigeons = await _pigeonRepository.GetByPigeonIdsAsync(races.SelectMany(r => r.PigeonRaces.Select(pr => pr.Pigeon.Id)));
-            HashSet<PigeonId> existingPigeonIds = existingPigeons.Select(p => p.Id).ToHashSet();
+            Dictionary<PigeonId, PigeonEntity> existingPigeonsById = existingPigeons.ToDictionary(p => p.Id);
 
             PigeonEntity[] pigeonsToAdd = races.SelectMany(r => r.PigeonRaces)
-                .ExceptBy(existingPigeonIds, pr => pr.Pigeon.Id)
+                .ExceptBy(existingPigeonsById.Keys, pr => pr.Pigeon.Id)
                 .Select(pr => new PigeonEntity(pr.Pigeon, pr.OwnerId))
                 .Where(pr => existingOwnerIds.Contains(pr.OwnerId))
                 .ToArray();
             await _pigeonRepository.AddRangeAsync(pigeonsToAdd);
+
+            foreach (PigeonRace pigeonRace in races.SelectMany(r => r.PigeonRaces)
+                 .Where(pr => existingPigeonsById.ContainsKey(pr.Pigeon.Id))
+                 .Where(pr => existingPigeonsById[pr.Pigeon.Id].OwnerId != pr.OwnerId))
+            {
+                existingPigeonsById[pigeonRace.Pigeon.Id].OwnerId = pigeonRace.OwnerId;
+            }
+            await _pigeonRepository.UpdateRangeAsync(existingPigeonsById.Values);
 
             RaceEntity[] racesToAdd = races.Select(r => new RaceEntity(r))
                 .ToArray();

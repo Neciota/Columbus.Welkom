@@ -6,6 +6,7 @@ namespace Columbus.Welkom.Application.Repositories.Interfaces
     {
         Task<T> AddAsync(T entity);
         Task<T> UpdateAsync(T entity);
+        Task<IEnumerable<T>> UpdateRangeAsync(IEnumerable<T> entities);
         Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities);
         Task<IEnumerable<T>> GetAllAsync();
         Task<bool> DeleteRangeAsync(IEnumerable<T> entities);
