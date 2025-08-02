@@ -53,6 +53,7 @@ namespace Columbus.Welkom.Client
             builder.Services.AddTransient<ISelectedYearPigeonService, SelectedYearPigeonService>();
             builder.Services.AddTransient<ISelectedYoungPigeonService, SelectedYoungPigeonService>();
 
+            builder.Services.AddTransient<ILeagueRepository, LeagueRepository>();
             builder.Services.AddTransient<IOwnerRepository, OwnerRepository>();
             builder.Services.AddTransient<IPigeonRaceRepository, PigeonRaceRepository>();
             builder.Services.AddTransient<IPigeonRepository, PigeonRepository>();

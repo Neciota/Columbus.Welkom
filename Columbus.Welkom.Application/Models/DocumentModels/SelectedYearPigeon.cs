@@ -2,10 +2,7 @@
 
 namespace Columbus.Welkom.Application.Models.DocumentModels;
 
-public class SelectedYearPigeon
+public class SelectedYearPigeon : BaseDocumentModel
 {
-    public int ClubId { get; set; }
-    public int Year { get; set; }
     public IEnumerable<OwnerPigeonPair> OwnerPigeonPairs { get; set; } = [];
-    public IEnumerable<string> RaceCodes { get; set; } = [];
 }

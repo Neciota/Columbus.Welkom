@@ -1,41 +1,58 @@
-﻿using Columbus.Models.Owner;
-using System.Text.Json.Serialization;
-
-namespace Columbus.Welkom.Application.Models.ViewModels
+﻿namespace Columbus.Welkom.Application.Models.ViewModels
 {
     public class Leagues
     {
-        private IEnumerable<LeagueOwner> _participants;
+        private readonly ICollection<League> _leagues;
 
-        [JsonConstructor]
-        public Leagues(IEnumerable<LeagueOwner> participants)
+        public Leagues(ICollection<League> leagues)
         {
-            _participants = participants;
+            _leagues = leagues;
         }
 
-        public IEnumerable<LeagueOwner> AllParticipants
+        public IEnumerable<LeagueOwner> AllParticipants => _leagues.SelectMany(l => l.LeagueOwners);
+
+        public IEnumerable<LeagueOwner> GetLeagueOwnersByLeagueRank(int leagueRank) => (_leagues.FirstOrDefault(p => p.Rank == leagueRank)?.LeagueOwners ?? []).OrderByDescending(p => p.Points);
+
+        public IEnumerable<League> AllLeagues => _leagues.OrderBy(l => l.Rank);
+
+        public void RemoveFromCurrentLeague(LeagueOwner participant)
         {
-            get => _participants;
-            set  {
-                _participants = value;
-                Console.WriteLine(_participants.Count());
+            League league = _leagues.First(l => l.LeagueOwners.Contains(participant));
+
+            if (league.LeagueOwners.IsReadOnly)
+            {
+                league.LeagueOwners = league.LeagueOwners.Except([participant]).ToArray();
+            }
+            else
+            {
+                league.LeagueOwners.Remove(participant);
             }
         }
 
-        public IEnumerable<LeagueOwner> GetLeagueOwnersByLeagueRank(int leagueRank) => _participants.Where(p => p.League.Rank == leagueRank).OrderByDescending(p => p.Points);
-
-        public IEnumerable<League> GetLeagues() => _participants.Select(p => p.League).DistinctBy(l => l.Rank).OrderByDescending(l => l.Rank);
-
-        public void Promote(LeagueOwner participant)
+        public void AddToLeague(LeagueOwner participant, int rank)
         {
-            participant.League.Rank--;
+            League? league = _leagues.FirstOrDefault(l => l.Rank == rank);
+            if (league is null)
+                return;
+
+            if (league.LeagueOwners.IsReadOnly)
+            {
+                league.LeagueOwners = league.LeagueOwners.Append(participant).ToArray();
+            }
+            else
+            {
+                league.LeagueOwners.Add(participant);
+            }
         }
 
-        public void Demote(LeagueOwner participant)
+        public void AddLeague(League league)
         {
-            participant.League.Rank++;
+            _leagues.Add(league);
         }
 
-        private LeagueOwner GetLeagueOwner(Owner owner) => _participants.First(p => p.Owner.Id == owner.Id);
+        public void RemoveLeague(League league)
+        {
+            _leagues.Remove(league);
+        }
     }
 }

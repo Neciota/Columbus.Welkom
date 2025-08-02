@@ -10,51 +10,117 @@
         Divisiespel
     </RadzenText>
 
-    <RadzenDropDown Data="_allOwners"
-                    SelectAllText="Iedereen"
-                    Style="min-width: 400px;"
-                    @bind-Value="_leagues.AllParticipants"
-                    Multiple="true">
-        <Template>
-            @((context as LeagueOwner)!.Owner.Id): @((context as LeagueOwner)!.Owner.Name)
-        </Template>
-    </RadzenDropDown>
+    <RadzenStack Orientation="Orientation.Horizontal">
+        <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                      Text="Divisie Toevoegen"
+                      Icon="forms_add_on"
+                      Click="AddLeagueAsync"
+                      Disabled="_isLoading" />
 
-    @foreach (League league in _leagues.GetLeagues())
-    {
-        <RadzenText TextStyle="TextStyle.Subtitle1">
-            @league.Name
-        </RadzenText>
-        <RadzenDataGrid Data="_leagues.GetLeagueOwnersByLeagueRank(league.Rank)"
-                        IsLoading="_leagues is null"
-                        EmptyText="Geen leden in deze divisie.">
-            <Columns>
-                <RadzenDataGridColumn TItem="LeagueOwner" Title="Lidnummer" Property="@nameof(LeagueOwner.Owner.Id)">
-                    <Template Context="leagueOwner">
-                        @leagueOwner.Owner.Id
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="LeagueOwner" Title="Naam" Property="@nameof(LeagueOwner.Owner.Name)">
-                    <Template Context="leagueOwner">
-                        @leagueOwner.Owner.Name
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="LeagueOwner" Title="Punten" Property="@nameof(LeagueOwner.Points)" />
-                <RadzenDataGridColumn TItem="LeagueOwner" Title="" Width="100px">
-                    <Template>
-                        <RadzenButton ButtonStyle="ButtonStyle.Success"
-                                      Icon="arrow_upward"
-                                      Click="@(() => _leagues!.Promote(context))"
-                                      Disabled="true" />
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                      Icon="arrow_downward"
-                                      Click="@(() => _leagues!.Demote(context))" />
-                    </Template>
-                </RadzenDataGridColumn>
-            </Columns>
-        </RadzenDataGrid>
-    }
+        <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                      Text="Exporteren"
+                      Icon="file_save"
+                      IsBusy="_isExporting"
+                      Click="ExportAsync"
+                      Disabled="_isLoading" />
+    </RadzenStack>
+
+    <RadzenText TextStyle="TextStyle.Body1" Visible="!_leagues.AllLeagues.Any() && !_isLoading">
+        Er zijn geen divisies aanwezig.
+    </RadzenText>
+
+    <RadzenRow Visible="_leagues.AllLeagues.Any()" AlignItems="AlignItems.Start">
+        @foreach (League league in _leagues.AllLeagues)
+        {
+            <RadzenColumn Size="12" SizeLG="6">
+                <RadzenCard>
+                    <RadzenDataGrid Data="_leagues.GetLeagueOwnersByLeagueRank(league.Rank)"
+                                    IsLoading="_isLoading"
+                                    EmptyText="Geen leden in deze divisie."
+                                    @ref="_dataGridsByLeagueRank[league.Rank]">
+                        <HeaderTemplate>
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Visible="!IsEditing(league)">
+                                    @league.Name
+                                </RadzenText>
+                                <RadzenTextBox @bind-Value="league.Name" Visible="IsEditing(league)" Placeholder="Naam" />
+
+                                <RadzenButton Icon="edit"
+                                              ButtonStyle="ButtonStyle.Dark"
+                                              Variant="Variant.Text"
+                                              Visible="!IsEditing(league)"
+                                              Click="() => _leagueToEdit = league" />
+                                <RadzenButton Icon="save"
+                                              ButtonStyle="ButtonStyle.Dark"
+                                              Variant="Variant.Text"
+                                              Visible="IsEditing(league)"
+                                              Click="UpdateLeagueAsync" />
+                                <RadzenButton Icon="delete"
+                                              ButtonStyle="ButtonStyle.Dark"
+                                              Variant="Variant.Text"
+                                              Click="() => DeleteLeagueAsync(league)" />
+                                <RadzenButton Icon="add"
+                                              ButtonStyle="ButtonStyle.Dark"
+                                              Variant="Variant.Text"
+                                              Click="() => AddOwnerToLeagueAsync(league)" />
+                            </RadzenStack>
+                        </HeaderTemplate>
+                        <Columns>
+                            <RadzenDataGridColumn TItem="LeagueOwner" Title="Lid">
+                                <Template Context="leagueOwner">
+                                    @leagueOwner.Owner?.Id - @leagueOwner.Owner?.Name
+                                </Template>
+                                <EditTemplate Context="leagueOwner">
+                                    <RadzenDropDown Data="_allOwners.ExceptBy(_leagues.AllParticipants.Select(o => o.Owner?.Id), o => o.Id)"
+                                                    @bind-Value="leagueOwner.Owner"
+                                                    AllowFiltering="true"
+                                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                    class="rz-w-100">
+                                        <Template Context="owner">
+                                            @owner.Id - @owner.Name
+                                        </Template>
+                                        <ValueTemplate Context="owner">
+                                            @owner.Id - @owner.Name
+                                        </ValueTemplate>
+                                    </RadzenDropDown>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="LeagueOwner" Title="Punten" Property="@nameof(LeagueOwner.Points)" Width="120px" />
+                            <RadzenDataGridColumn TItem="LeagueOwner" Title="" Width="120px">
+                                <Template Context="leagueOwner">
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                                        <RadzenButton ButtonStyle="ButtonStyle.Dark"
+                                                      Variant="Variant.Text"
+                                                      Icon="delete"
+                                                      Click="() => DeleteOwnerInLeague(league, leagueOwner)" />
+                                    </RadzenStack>
+
+                                </Template>
+                                <EditTemplate Context="leagueOwner">
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                                        <RadzenButton ButtonStyle="ButtonStyle.Dark"
+                                                      Variant="Variant.Text"
+                                                      Icon="save"
+                                                      Disabled="leagueOwner.Owner is null"
+                                                      Click="() => SaveOwnerInLeague(league, leagueOwner)" />
+                                        <RadzenButton ButtonStyle="ButtonStyle.Dark"
+                                                      Variant="Variant.Text"
+                                                      Icon="delete"
+                                                      Click="() => CancelAdd(league, leagueOwner)" />
+                                    </RadzenStack>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                </RadzenCard>
+            </RadzenColumn>
+        }
+    </RadzenRow>
 </RadzenStack>
+
+<RadzenRow AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Center" Visible="_isLoading">
+    <RadzenProgressBarCircular Mode="ProgressBarMode.Indeterminate" ShowValue="false" Size="ProgressBarCircularSize.Large" />
+</RadzenRow>
 
 @code {
     [CascadingParameter(Name = "Club")]
@@ -62,14 +128,104 @@
     [CascadingParameter(Name = "Year")]
     public int Year { get; set; }
 
+    private bool _isLoading = false;
+    private bool _isExporting = false;
     private Leagues _leagues = new([]);
-    private IEnumerable<LeagueOwner> _allOwners = [];
+    private IEnumerable<Owner> _allOwners = [];
+    private League? _leagueToEdit = null;
+    private League? _leagueToLoad = null;
+
+    Dictionary<int, RadzenDataGrid<LeagueOwner>> _dataGridsByLeagueRank = [];
 
     protected override async Task OnParametersSetAsync()
     {
         await base.OnParametersSetAsync();
 
-        //_allOwners = await OwnerService.GetOwnersByYearWithAllPigeonsAsync(Year);
-        //_leagues = LeagueService.GetStorage(Club, Year) ?? new Leagues(new List<LeagueOwner>());
+        _isLoading = true;
+
+        await Task.Run(async () =>
+        {
+            _allOwners = await OwnerService.GetOwnersWithAllPigeonsAsync();
+            _leagues = await LeagueService.GetLeaguesAsync();
+        });
+
+        _isLoading = false;
+    }
+
+    private bool IsEditing(League league) => _leagueToEdit == league;
+
+    private bool IsLoading(League league) => _leagueToLoad == league;
+
+    private async Task AddLeagueAsync()
+    {
+        int newRank = (_leagues.AllLeagues.MaxBy(l => l.Rank)?.Rank ?? 0) + 1;
+        League newLeague = new League
+        {
+            Name = string.Empty,
+            Rank = newRank
+        };
+
+        _leagues.AddLeague(newLeague);
+        await LeagueService.AddLeagueAsync(newLeague);
+        _leagueToEdit = newLeague;
+    }
+
+    private async Task UpdateLeagueAsync()
+    {
+        if (_leagueToEdit is null)
+            return;
+
+        await LeagueService.UpdateLeagueAsync(_leagueToEdit);
+        _leagueToEdit = null;
+    }
+
+    private async Task DeleteLeagueAsync(League league)
+    {
+        _leagues.RemoveLeague(league);
+        await LeagueService.DeleteLeagueAsync(league);
+    }
+
+    private async Task AddOwnerToLeagueAsync(League league)
+    {
+        LeagueOwner newOwner = new() { Owner = null, Points = 0 };
+        _leagues.AddToLeague(newOwner, league.Rank);
+
+        await _dataGridsByLeagueRank[league.Rank].InsertRow(newOwner);
+    }
+
+    private async Task SaveOwnerInLeague(League league, LeagueOwner leagueOwner)
+    {
+        _leagueToLoad = league;
+
+        await _dataGridsByLeagueRank[league.Rank].UpdateRow(leagueOwner);
+
+        await Task.Run(async () =>
+        {
+            await LeagueService.UpdateLeagueAsync(league);
+            _leagues = await LeagueService.GetLeaguesAsync();
+        });
+
+        _leagueToLoad = null;
+    }
+
+    private void CancelAdd(League league, LeagueOwner leagueOwner)
+    {
+        _leagues.RemoveFromCurrentLeague(leagueOwner);
+        _dataGridsByLeagueRank[league.Rank].CancelEditRow(leagueOwner);
+    }
+
+    private async Task DeleteOwnerInLeague(League league, LeagueOwner leagueOwner)
+    {
+        _leagues.RemoveFromCurrentLeague(leagueOwner);
+        await LeagueService.UpdateLeagueAsync(league);
+    }
+
+    private async Task ExportAsync()
+    {
+        _isExporting = true;
+
+        await LeagueService.ExportAsync(_leagues);
+
+        _isExporting = false;
     }
 }
