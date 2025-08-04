@@ -1,31 +1,10 @@
-﻿using Columbus.Models;
-using Columbus.Models.Owner;
-
-namespace Columbus.Welkom.Application.Models.ViewModels
+﻿namespace Columbus.Welkom.Application.Models.ViewModels
 {
     public class Team
     {
-        public Team()
-        {
+        public int Number { get; set; }
+        public ICollection<TeamOwner> TeamOwners { get; set; } = [];
 
-        }
-
-        public Team(Owner firstOwner, Owner secondOwner, Owner thirdOwner)
-        {
-            FirstOwner = firstOwner;
-            SecondOwner = secondOwner;
-            ThirdOwner = thirdOwner;
-        }
-
-        public Owner? FirstOwner { get; set; }
-        public Owner? SecondOwner { get; set; }
-        public Owner? ThirdOwner { get; set; }
-        public int FirstOwnerPoints { get; set; }
-        public int SecondOwnerPoints { get; set; }
-        public int ThirdOwnerPoints { get; set; }
-
-        public int TotalPoints => FirstOwnerPoints + SecondOwnerPoints + ThirdOwnerPoints;
-
-        public bool OwnerIsInTeam(Owner owner) => FirstOwner?.Id == owner.Id || SecondOwner?.Id == owner.Id || ThirdOwner?.Id == owner.Id;
+        public double TotalPoints => TeamOwners.Sum(to => to.Points);
     }
 }

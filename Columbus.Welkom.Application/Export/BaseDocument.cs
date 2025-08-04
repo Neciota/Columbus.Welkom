@@ -1,5 +1,6 @@
 ﻿using Columbus.Welkom.Application.Models.DocumentModels;
 using QuestPDF.Fluent;
+using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
 namespace Columbus.Welkom.Application.Export;
@@ -14,11 +15,14 @@ public abstract class BaseDocument : IDocument
 
     protected abstract string Title { get; }
 
+    protected virtual PageSize PageSize { get; } = PageSizes.A4.Portrait();
+
     public void Compose(IDocumentContainer container)
     {
         container
             .Page(page =>
             {
+                page.Size(PageSize);
                 page.Margin(50);
 
                 page.Header().Element(ComposeHeader);

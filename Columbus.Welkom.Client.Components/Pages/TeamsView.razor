@@ -3,60 +3,103 @@
 @using Columbus.Welkom.Application.Models.ViewModels
 @using Columbus.Welkom.Application.Services.Interfaces
 @inject IOwnerService OwnerService
+@inject ITeamsService TeamsService
 
 <RadzenStack AlignItems="AlignItems.Start" Orientation="Orientation.Vertical">
     <RadzenText TextStyle="TextStyle.DisplayH6">
         Ploegenspel
     </RadzenText>
 
-    <RadzenButton ButtonStyle="ButtonStyle.Primary"
-                  Text="Ploeg Toevoegen"
-                  Icon="playlist_add"
-                  Click="AddTeam" />
+    <RadzenStack Orientation="Orientation.Horizontal">
+        <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                      Text="Ploeg Toevoegen"
+                      Icon="playlist_add"
+                      Disabled="_isLoading"
+                      Click="AddTeam" />
+        <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                      Text="Exporteren"
+                      Icon="file_save"
+                      IsBusy="_isExporting"
+                      Click="ExportAsync"
+                      Disabled="_isLoading" />
+    </RadzenStack>
 
-    <RadzenDataGrid Data="_teams" EmptyText="Geen ploegen gevonden." @ref="_teamsGrid">
+    <RadzenDataGrid Data="_teams" EmptyText="Geen ploegen gevonden." @ref="_teamsGrid" Visible="!_isLoading">
         <Columns>
-            <RadzenDataGridColumn TItem="Team" Title="Puntentotaal" Property="TotalPoints" />
-            <RadzenDataGridColumn TItem="Team" Title="Lid">
-                <Template>
-                    <RadzenDropDown TValue="Owner" Data="UnassignedOwners()" @bind-Value="context.FirstOwner" class="rz-w-100">
-                        <Template Context="possibleOwner">
-                            @((possibleOwner as Owner)!.Id): @((possibleOwner as Owner)!.Name)
-                        </Template>
-                    </RadzenDropDown>
+            <RadzenDataGridColumn TItem="Team" Title="Puntentotaal" Property="@nameof(Team.TotalPoints)" Width="100px" OrderIndex="0" />
+            @foreach (int position in Enumerable.Range(0, 5))
+            {
+                <RadzenDataGridColumn TItem="Team" Title="Lid" OrderIndex="position * 2 + 1">
+                    <Template Context="team">
+                        @team.TeamOwners.FirstOrDefault(to => to.Position == position)?.Owner?.Name
+                    </Template>
+                    <EditTemplate Context="team">
+                        @{
+                            TeamOwner? teamOwner = team.TeamOwners.FirstOrDefault(to => to.Position == position);
+                        }
+                        @if (teamOwner is not null)
+                        {
+                            <RadzenDropDown TValue="Owner"
+                                            Data="UnassignedOwners"
+                                            @bind-Value="teamOwner.Owner"
+                                            AllowFiltering="true"
+                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                            class="rz-w-100">
+                                <Template Context="possibleOwner">
+                                    @((possibleOwner as Owner)!.Id) - @((possibleOwner as Owner)!.Name)
+                                </Template>
+                                <ValueTemplate Context="possibleOwner">
+                                    @((possibleOwner as Owner)!.Id) - @((possibleOwner as Owner)!.Name)
+                                </ValueTemplate>
+                            </RadzenDropDown>
+                        }
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Team" Title="Punten" Width="80px" OrderIndex="position * 2 + 2">
+                    <Template Context="team">
+                        @team.TeamOwners.FirstOrDefault(to => to.Position == position)?.Points
+                    </Template>
+                </RadzenDataGridColumn>
+            }
+            <RadzenDataGridColumn TItem="Team" Width="140px" TextAlign="TextAlign.End" OrderIndex="11">
+                <Template Context="team">
+                    <RadzenButton Icon="add"
+                                  ButtonStyle="ButtonStyle.Dark"
+                                  Variant="Variant.Text"
+                                  Click="() => AddOwnerAsync(team)" />
+                    <RadzenButton Icon="edit"
+                                  ButtonStyle="ButtonStyle.Dark"
+                                  Variant="Variant.Text"
+                                  Click="() => EditTeamAsync(team)" />
+                    <RadzenButton Icon="delete"
+                                  ButtonStyle="ButtonStyle.Dark"
+                                  Variant="Variant.Text"
+                                  Click="() => DeleteTeamAsync(team)" />
+
                 </Template>
-            </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Team" Title="Punten" Property="FirstOwnerPoints" />
-            <RadzenDataGridColumn TItem="Team" Title="Lid">
-                <Template>
-                    <RadzenDropDown TValue="Owner" Data="UnassignedOwners()" @bind-Value="context.SecondOwner" class="rz-w-100">
-                        <Template Context="possibleOwner">
-                            @((possibleOwner as Owner)!.Id): @((possibleOwner as Owner)!.Name)
-                        </Template>
-                    </RadzenDropDown>
-                </Template>
-            </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Team" Title="Punten" Property="SecondOwnerPoints" />
-            <RadzenDataGridColumn TItem="Team" Title="Lid">
-                <Template>
-                    <RadzenDropDown TValue="Owner" Data="UnassignedOwners()" @bind-Value="context.ThirdOwner" class="rz-w-100">
-                        <Template Context="possibleOwner">
-                            @((possibleOwner as Owner)!.Id): @((possibleOwner as Owner)!.Name)
-                        </Template>
-                    </RadzenDropDown>
-                </Template>
-            </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Team" Title="Punten" Property="ThirdOwnerPoints" />
-            <RadzenDataGridColumn TItem="Team" Width="50px">
-                <Template>
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                <EditTemplate Context="team">
+                    <RadzenButton Icon="add"
+                                  ButtonStyle="ButtonStyle.Dark"
+                                  Variant="Variant.Text"
+                                  Click="() => AddOwnerAsync(team)" />
+                    <RadzenButton Icon="save"
+                                  ButtonStyle="ButtonStyle.Dark"
+                                  Variant="Variant.Text"
+                                  Disabled="team.TeamOwners.Any(to => to.Owner is null)"
+                                  Click="() => SaveTeamAsync(team)" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Dark"
+                                  Variant="Variant.Text"
                                   Icon="delete"
-                                  Click="@(() => DeleteTeam(context))" />
-                </Template>
+                                  Click="() => CancelAdd(team)" />
+                </EditTemplate>
             </RadzenDataGridColumn>
         </Columns>
     </RadzenDataGrid>
 </RadzenStack>
+
+<RadzenRow AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Center" Visible="_isLoading">
+    <RadzenProgressBarCircular Mode="ProgressBarMode.Indeterminate" ShowValue="false" Size="ProgressBarCircularSize.Large" />
+</RadzenRow>
 
 @code {
     [CascadingParameter(Name = "Club")]
@@ -64,20 +107,85 @@
     [CascadingParameter(Name = "Year")]
     public int Year { get; set; }
 
-    private RadzenDataGrid<Team> _teamsGrid = null!;
-    private IEnumerable<Owner> _allOwners = null!;
-    private IEnumerable<Team> _teams = null!;
+    private RadzenDataGrid<Team>? _teamsGrid;
+    private IEnumerable<Owner> _allOwners = [];
+    private IEnumerable<Team> _teams = [];
+    private bool _isLoading = false;
+    private bool _isExporting = false;
 
     protected override async Task OnParametersSetAsync()
     {
+        _isLoading = true;
+
         await base.OnParametersSetAsync();
 
-        _allOwners = await OwnerService.GetOwnersWithAllPigeonsAsync();
-        _teams = new List<Team>();
+        await Task.Run(async () =>
+        {
+            _allOwners = await OwnerService.GetOwnersWithAllPigeonsAsync();
+            _teams = await TeamsService.GetAllAsync();
+        });
+
+        _isLoading = false;
     }
 
-    private IEnumerable<Owner> UnassignedOwners() => _allOwners.Where(o => !_teams.Any(t => t.OwnerIsInTeam(o)));
+    private IEnumerable<Owner> UnassignedOwners => _allOwners.ExceptBy(_teams.SelectMany(t => t.TeamOwners).Select(to => to.Owner?.Id), o => o.Id);
 
-    private void AddTeam() => _teamsGrid.InsertRow(new Team());
-    private void DeleteTeam(Team team) => _teams = _teams.Where(t => t != team);
+    private async Task AddOwnerAsync(Team team)
+    {
+        if (_teamsGrid is null)
+            return;
+
+        int position = team.TeamOwners.MaxBy(to => to.Position)?.Position + 1 ?? 0;
+        team.TeamOwners.Add(new TeamOwner() { Owner = null, Points = 0, Position = position });
+        await _teamsGrid.EditRow(team);
+    }
+
+    private async Task EditTeamAsync(Team team)
+    {
+        if (_teamsGrid is null)
+            return;
+
+        await _teamsGrid.EditRow(team);
+    }
+
+    private void AddTeam()
+    {
+        Team team = new()
+        {
+            Number = (_teams.MaxBy(t => t.Number)?.Number ?? 0) + 1,
+            TeamOwners = [new TeamOwner { Owner = null, Points = 0, Position = 0, }],
+        };
+
+        _teamsGrid?.InsertRow(team);
+    }
+
+    private void CancelAdd(Team team)
+    {
+        _teamsGrid?.CancelEditRow(team);
+    }
+
+    private async Task DeleteTeamAsync(Team team)
+    {
+        _teams = _teams.Except([team]);
+        await TeamsService.DeleteTeamAsync(team);
+    }
+
+    private async Task SaveTeamAsync(Team team)
+    {
+        if (_teamsGrid is null)
+            return;
+
+        await _teamsGrid.UpdateRow(team);
+
+        await Task.Run(async () =>
+        {
+            await TeamsService.UpdateTeamAsync(team);
+            _teams = await TeamsService.GetAllAsync();
+        });
+    }
+
+    private async Task ExportAsync()
+    {
+        await TeamsService.ExportAsync(_teams);
+    }
 }

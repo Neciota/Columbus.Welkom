@@ -14,5 +14,8 @@ public class TeamEntityConfiguration : IEntityTypeConfiguration<TeamEntity>
 
         builder.Property(e => e.Number)
             .HasColumnName("number");
+
+        builder.HasMany(e => e.TeamOwners)
+            .WithOne(e => e.Team);
     }
 }

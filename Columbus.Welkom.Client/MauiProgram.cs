@@ -52,6 +52,7 @@ namespace Columbus.Welkom.Client
             builder.Services.AddTransient<IRaceService, RaceService>();
             builder.Services.AddTransient<ISelectedYearPigeonService, SelectedYearPigeonService>();
             builder.Services.AddTransient<ISelectedYoungPigeonService, SelectedYoungPigeonService>();
+            builder.Services.AddTransient<ITeamsService, TeamsService>();
 
             builder.Services.AddTransient<ILeagueRepository, LeagueRepository>();
             builder.Services.AddTransient<IOwnerRepository, OwnerRepository>();
@@ -61,6 +62,7 @@ namespace Columbus.Welkom.Client
             builder.Services.AddTransient<IRaceRepository, RaceRepository>();
             builder.Services.AddTransient<ISelectedYearPigeonRepository, SelectedYearPigeonRepository>();
             builder.Services.AddTransient<ISelectedYoungPigeonRepository, SelectedYoungPigeonRepository>();
+            builder.Services.AddTransient<ITeamsRepository, TeamsRepository>();
 
             builder.Services.AddTransient<Application.Providers.IFilePicker, FilePicker>();
             builder.Services.AddTransient(b => new Application.Providers.SettingsProvider(appFolder));
