@@ -64,8 +64,9 @@
             <RadzenDataGridColumn TItem="OwnerPigeonPair" Title="Punten" Property="@nameof(OwnerPigeonPair.Points)" />
             <RadzenDataGridColumn TItem="OwnerPigeonPair" Width="60px">
                 <Template Context="ownerPigeonPair">
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                  Icon="delete"
+                    <RadzenButton Icon="delete"
+                                  ButtonStyle="ButtonStyle.Dark"
+                                  Variant="Variant.Text"
                                   Click="@(() => DeleteOwnerPigeonPair(ownerPigeonPair))" />
                 </Template>
             </RadzenDataGridColumn>

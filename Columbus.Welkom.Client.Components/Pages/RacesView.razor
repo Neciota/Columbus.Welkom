@@ -46,8 +46,14 @@
             <RadzenDataGridColumn TItem="SimpleRace" Property="@nameof(SimpleRace.PigeonCount)" Title="Duiven" />
             <RadzenDataGridColumn TItem="SimpleRace" Width="100px">
                 <Template Context="race">
-                    <RadzenButton ButtonStyle="ButtonStyle.Info" Icon="info" Click="(() => GoToRace(race.Code))" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Click="(() => DeleteRace(race))" />
+                    <RadzenButton Icon="info"
+                                  ButtonStyle="ButtonStyle.Dark"
+                                  Variant="Variant.Text"
+                                  Click="(() => GoToRace(race.Code))" />
+                    <RadzenButton Icon="delete"
+                                  ButtonStyle="ButtonStyle.Dark"
+                                  Variant="Variant.Text"
+                                  Click="(() => DeleteRace(race))" />
                 </Template>
             </RadzenDataGridColumn>
         </Columns>
