@@ -12,5 +12,6 @@ namespace Columbus.Welkom.Application.Repositories.Interfaces
         Task<IEnumerable<SimpleRaceEntity>> GetAllSimpleByTypesAsync(RaceType[] types);
         Task<RaceEntity> GetByCodeAsync(string code);
         Task<bool> IsRaceCodePresentAsync(string code);
+        Task<RaceEntity> GetMostRecentRaceAsync();
     }
 }

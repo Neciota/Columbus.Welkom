@@ -59,7 +59,7 @@ public abstract class BaseDocument : IDocument
                     subrow.RelativeItem().AlignRight().Text(_documentModel.ClubId.ToString());
                     subrow.RelativeItem().AlignRight().Text(_documentModel.Year.ToString());
                 });
-                column.Item().Text(string.Join(",  ", _documentModel.RaceCodes)).FontSize(8);
+                column.Item().Text($"Tot en met {_documentModel.LastRaceName} {_documentModel.LastRaceDate:dd-MM-yyyy}");
             });
         });
     }

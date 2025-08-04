@@ -86,7 +86,7 @@ namespace Columbus.Welkom.Application.Services
             LeagueEntity? existingLeague = await _leagueRepository.GetByRankAsync(league.Rank);
             if (existingLeague is null)
                 throw new ArgumentException("League does not exist.");
-            if (existingLeague.LeagueOwners.Any(lo => lo.Owner is null))
+            if (league.LeagueOwners.Any(lo => lo.Owner is null))
                 throw new ArgumentException("Owner is not set for an entry.");
 
             existingLeague.Name = league.Name;
@@ -110,15 +110,15 @@ namespace Columbus.Welkom.Application.Services
 
         public async Task ExportAsync(Leagues leagues)
         {
-            RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
-            IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync(raceSettings.AppliedRaceTypes.SelectedYearPigeonRaceTypes.ToArray());
+            RaceEntity mostRecentRace = await _raceRepository.GetMostRecentRaceAsync();
 
             Models.DocumentModels.Leagues documentLeagues = new()
             {
                 ClubId = _appSettings.Value.Club,
                 Year = _appSettings.Value.Year,
                 AllLeagues = leagues.AllLeagues,
-                RaceCodes = raceEntities.Select(re => re.Code)
+                LastRaceName = mostRecentRace.Name,
+                LastRaceDate = mostRecentRace.StartTime
             };
 
             LeaguesDocument document = new(documentLeagues);

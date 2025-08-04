@@ -56,5 +56,11 @@ namespace Columbus.Welkom.Application.Repositories
             return await _context.Races.Where(r => r.Code == code)
                 .ExecuteDeleteAsync();
         }
+
+        public async Task<RaceEntity> GetMostRecentRaceAsync()
+        {
+            return await _context.Races.OrderByDescending(r => r.StartTime)
+                .FirstAsync();
+        }
     }
 }

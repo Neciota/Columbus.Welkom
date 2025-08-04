@@ -106,15 +106,15 @@ namespace Columbus.Welkom.Application.Services
 
         public async Task ExportAsync(IEnumerable<OwnerPigeonPair> ownerPigeonPairs)
         {
-            RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
-            IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync(raceSettings.AppliedRaceTypes.SelectedYearPigeonRaceTypes.ToArray());
+            RaceEntity mostRecentRace = await _raceRepository.GetMostRecentRaceAsync();
 
             SelectedYearPigeon selectedYearPigeon = new()
             {
                 ClubId = _appSettings.Value.Club,
                 Year = _appSettings.Value.Year,
                 OwnerPigeonPairs = ownerPigeonPairs,
-                RaceCodes = raceEntities.Select(re => re.Code)
+                LastRaceName = mostRecentRace.Name,
+                LastRaceDate = mostRecentRace.StartTime,
             };
 
             SelectedYearPigeonDocument document = new(selectedYearPigeon);
