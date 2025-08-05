@@ -17,7 +17,8 @@ namespace Columbus.Welkom.Application.Repositories
 
         public async Task<IEnumerable<SimpleRaceEntity>> GetAllSimpleAsync()
         {
-            return await _context.Races.Select(r => new SimpleRaceEntity(r.Number, r.Type, r.Name, r.Code, r.StartTime, r.Latitude, r.Longitude, r.PigeonRaces!.Select(pr => pr.Pigeon!.Owner).Distinct().Count(), r.PigeonRaces!.Count()))
+            return await _context.Races.OrderByDescending(r => r.StartTime)
+                .Select(r => new SimpleRaceEntity(r.Number, r.Type, r.Name, r.Code, r.StartTime, r.Latitude, r.Longitude, r.PigeonRaces!.Select(pr => pr.Pigeon!.Owner).Distinct().Count(), r.PigeonRaces!.Count()))
                 .ToListAsync();
         }
 

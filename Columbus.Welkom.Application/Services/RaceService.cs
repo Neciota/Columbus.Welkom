@@ -71,8 +71,7 @@ namespace Columbus.Welkom.Application.Services
         {
             IEnumerable<SimpleRaceEntity> races = await _raceRepository.GetAllSimpleAsync();
 
-            return races.Select(r => r.ToSimpleRace())
-                .OrderBy(r => r.Number);
+            return races.Select(r => r.ToSimpleRace()).ToList();
         }
 
         public async Task<IEnumerable<SimpleRace>> GetAllRacesByTypeAsync(RaceType type)
