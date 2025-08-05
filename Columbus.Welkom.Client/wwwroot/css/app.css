@@ -86,14 +86,24 @@ h1:focus {
 }
 
 :root {
-    --rz-primary: #374d6c !important;
-    --rz-primary-lighter: #7f99bd !important;
-    --rz-primary-light: #49658d !important;
-    --rz-primary-dark: #151d28 !important;
-    --rz-primary-darker: #090c10 !important;
+    --rz-primary: #1f297d !important;
+    --rz-primary-lighter: #3746cd !important;
+    --rz-primary-light: #8992e1 !important;
+    --rz-primary-dark: #161c55 !important;
+    --rz-primary-darker: #0c0f2d !important;
     --rz-secondary: #FFBA00 !important;
     --rz-secondary-lighter: #fff1cc !important;
     --rz-secondary-light: #ffd666 !important;
     --rz-secondary-dark: #332500 !important;
     --rz-secondary-darker: #997000 !important;
+    --rz-on-primary: #ffffff !important;
+    --rz-on-primary-light: #ffffff !important;
+    --rz-on-primary-lighter: #ffffff !important;
+    --rz-on-primary-dark: #ffffff !important;
+    --rz-on-primary-darker: #ffffff !important;
+    --rz-on-secondary: #ffffff !important;
+    --rz-on-secondary-light: #000000 !important;
+    --rz-on-secondary-lighter: #000000 !important;
+    --rz-on-secondary-dark: #000000 !important;
+    --rz-on-secondary-darker: #000000 !important;
 }
