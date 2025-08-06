@@ -1,0 +1,175 @@
+@page "/pigeon-sale"
+@inject IOwnerService OwnerService
+@inject IPigeonSaleService PigeonSaleService
+
+<RadzenStack Orientation="Orientation.Vertical">
+    <RadzenText TextStyle="TextStyle.DisplayH6">
+        Duivenverkoop
+    </RadzenText>
+
+    <RadzenStack Orientation="Orientation.Horizontal">
+        <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                      Text="Verkoop toevoegen"
+                      Icon="playlist_add"
+                      Disabled="_isLoading"
+                      Click="AddSaleAsync" />
+        <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                      Text="Exporteren"
+                      Icon="file_save"
+                      IsBusy="_isExporting"
+                      Click="ExportAsync"
+                      Disabled="_isLoading" />
+    </RadzenStack>
+
+    <RadzenDataGrid Data="_pigeonSales" @ref="_saleGrid" IsLoading="_isLoading" EmptyText="Geen duivenverkopen gevonden.">
+        <Columns>
+            <RadzenDataGridColumn TItem="PigeonSale" Title="Verkoper">
+                <Template Context="pigeonSale">
+                    @pigeonSale.Seller?.Name
+                </Template>
+                <EditTemplate Context="pigeonSale">
+                    <RadzenDropDown Data="_allOwners"
+                                    @bind-Value="pigeonSale.Seller"
+                                    AllowFiltering="true"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    class="rz-w-100">
+                        <Template Context="possibleOwner">
+                            @((possibleOwner as Owner)!.Id) - @((possibleOwner as Owner)!.Name)
+                        </Template>
+                        <ValueTemplate Context="possibleOwner">
+                            @((possibleOwner as Owner)!.Id) - @((possibleOwner as Owner)!.Name)
+                        </ValueTemplate>
+                    </RadzenDropDown>
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PigeonSale" Title="Koper">
+                <Template Context="pigeonSale">
+                    @pigeonSale.Seller?.Name
+                </Template>
+                <EditTemplate Context="pigeonSale">
+                    <RadzenDropDown Data="_allOwners"
+                                    @bind-Value="pigeonSale.Buyer"
+                                    AllowFiltering="true"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    class="rz-w-100">
+                        <Template Context="possibleOwner">
+                            @((possibleOwner as Owner)!.Id) - @((possibleOwner as Owner)!.Name)
+                        </Template>
+                        <ValueTemplate Context="possibleOwner">
+                            @((possibleOwner as Owner)!.Id) - @((possibleOwner as Owner)!.Name)
+                        </ValueTemplate>
+                    </RadzenDropDown>
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PigeonSale" Title="Duif">
+                <Template Context="pigeonSale">
+                    @pigeonSale.Pigeon?.Id
+                </Template>
+                <EditTemplate Context="pigeonSale">
+                    <RadzenDropDown Data="pigeonSale.Buyer?.Pigeons"
+                                    @bind-Value="pigeonSale.Pigeon"
+                                    AllowFiltering="true"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    class="rz-w-100" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PigeonSale" Width="120px" TextAlign="TextAlign.End">
+                <Template Context="pigeonSale">
+                    <RadzenButton Icon="edit"
+                                  ButtonStyle="ButtonStyle.Dark"
+                                  Variant="Variant.Text"
+                                  Click="() => EditPigeonSaleAsync(pigeonSale)" />
+                    <RadzenButton Icon="delete"
+                                  ButtonStyle="ButtonStyle.Dark"
+                                  Variant="Variant.Text"
+                                  Click="() => DeletePigeonSaleAsync(pigeonSale)" />
+
+                </Template>
+                <EditTemplate Context="pigeonSale">
+                    <RadzenButton Icon="save"
+                                  ButtonStyle="ButtonStyle.Dark"
+                                  Variant="Variant.Text"
+                                  Disabled="pigeonSale.Seller is null || pigeonSale.Buyer is null || pigeonSale.Pigeon is null"
+                                  Click="() => SavePigeonSaleAsync(pigeonSale)" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Dark"
+                                  Variant="Variant.Text"
+                                  Icon="delete"
+                                  Click="() => CancelAdd(pigeonSale)" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenStack>
+
+@code {
+    [CascadingParameter(Name = "Club")]
+    public int Club { get; set; }
+    [CascadingParameter(Name = "Year")]
+    public int Year { get; set; }
+
+    private IEnumerable<Owner> _allOwners = [];
+    private IEnumerable<PigeonSale> _pigeonSales = [];
+    private RadzenDataGrid<PigeonSale>? _saleGrid;
+    private bool _isLoading = false;
+    private bool _isExporting = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        _isLoading = true;
+
+        await Task.Run(async () =>
+        {
+            _allOwners = await OwnerService.GetOwnersWithYearPigeonsAsync(Year);
+            _pigeonSales = await PigeonSaleService.GetAllAsync();
+        });
+
+        _isLoading = false;
+    }
+
+    private async Task AddSaleAsync()
+    {
+        if (_saleGrid is null)
+            return;
+
+        await _saleGrid.InsertRow(new PigeonSale());
+    }
+
+    private async Task EditPigeonSaleAsync(PigeonSale pigeonSale)
+    {
+        if (_saleGrid is null)
+            return;
+
+        await _saleGrid.EditRow(pigeonSale);
+    }
+
+    private async Task DeletePigeonSaleAsync(PigeonSale pigeonSale)
+    {
+        _pigeonSales = _pigeonSales.Except([pigeonSale]);
+        await PigeonSaleService.DeleteAsync(pigeonSale);
+    }
+
+    private void CancelAdd(PigeonSale pigeonSale)
+    {
+        _saleGrid?.CancelEditRow(pigeonSale);
+    }
+
+    private async Task SavePigeonSaleAsync(PigeonSale pigeonSale)
+    {
+        if (_saleGrid is null)
+            return;
+
+        await _saleGrid.UpdateRow(pigeonSale);
+        await Task.Run(async () =>
+        {
+            await PigeonSaleService.UpdateAsync(pigeonSale);
+            _pigeonSales = await PigeonSaleService.GetAllAsync();
+        });   
+    }
+
+    private async Task ExportAsync()
+    {
+        
+    }
+}
