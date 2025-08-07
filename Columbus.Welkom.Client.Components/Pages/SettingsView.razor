@@ -167,6 +167,21 @@
                                         class="rz-w-100" />
                     </RadzenColumn>
                 </RadzenRow>
+
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        Duivenverkoop
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenDropDown Data="RaceTypes"
+                                        @bind-Value="_settings.AppliedRaceTypes.PigeonSaleRaceTypes"
+                                        Multiple="true"
+                                        Separator=", "
+                                        MaxSelectedLabels="RaceTypes.Count() + 1"
+                                        Change="SaveSettingsAsync"
+                                        class="rz-w-100" />
+                    </RadzenColumn>
+                </RadzenRow>
             </RadzenStack>
         </RadzenFieldset>
 

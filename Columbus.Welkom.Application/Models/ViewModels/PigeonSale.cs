@@ -9,5 +9,6 @@ public class PigeonSale
     public Owner? Seller { get; set; }
     public Owner? Buyer { get; set; }
     public Pigeon? Pigeon { get; set; }
-    public double Points { get; set; }
+    public ICollection<RacePoints> RacePoints { get; set; } = [];
+    public double TotalPoints => RacePoints.Sum(rp => rp.Points);
 }

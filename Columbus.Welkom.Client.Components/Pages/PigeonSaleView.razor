@@ -44,7 +44,7 @@
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="PigeonSale" Title="Koper">
                 <Template Context="pigeonSale">
-                    @pigeonSale.Seller?.Name
+                    @pigeonSale.Buyer?.Name
                 </Template>
                 <EditTemplate Context="pigeonSale">
                     <RadzenDropDown Data="_allOwners"
@@ -73,6 +73,7 @@
                                     class="rz-w-100" />
                 </EditTemplate>
             </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PigeonSale" Title="Punten" Property="@nameof(PigeonSale.TotalPoints)" />
             <RadzenDataGridColumn TItem="PigeonSale" Width="120px" TextAlign="TextAlign.End">
                 <Template Context="pigeonSale">
                     <RadzenButton Icon="edit"
