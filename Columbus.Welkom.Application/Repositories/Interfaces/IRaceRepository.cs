@@ -7,9 +7,9 @@ namespace Columbus.Welkom.Application.Repositories.Interfaces
     {
         Task<int> DeleteRaceByCodeAsync(string code);
         Task<int> DeleteRangeAsync();
-        Task<IEnumerable<RaceEntity>> GetAllByTypesAsync(RaceType[] types);
-        Task<IEnumerable<SimpleRaceEntity>> GetAllSimpleAsync();
-        Task<IEnumerable<SimpleRaceEntity>> GetAllSimpleByTypesAsync(RaceType[] types);
+        Task<ICollection<RaceEntity>> GetAllByTypesAsync(RaceType[] types);
+        Task<ICollection<SimpleRaceEntity>> GetAllSimpleAsync();
+        Task<ICollection<SimpleRaceEntity>> GetAllSimpleByTypesAsync(RaceType[] types);
         Task<RaceEntity> GetByCodeAsync(string code);
         Task<bool> IsRaceCodePresentAsync(string code);
         Task<RaceEntity> GetMostRecentRaceAsync();

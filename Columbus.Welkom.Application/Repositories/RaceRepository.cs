@@ -15,14 +15,14 @@ namespace Columbus.Welkom.Application.Repositories
             return await _context.Races.ExecuteDeleteAsync();
         }
 
-        public async Task<IEnumerable<SimpleRaceEntity>> GetAllSimpleAsync()
+        public async Task<ICollection<SimpleRaceEntity>> GetAllSimpleAsync()
         {
             return await _context.Races.OrderByDescending(r => r.StartTime)
                 .Select(r => new SimpleRaceEntity(r.Number, r.Type, r.Name, r.Code, r.StartTime, r.Latitude, r.Longitude, r.PigeonRaces!.Select(pr => pr.Pigeon!.Owner).Distinct().Count(), r.PigeonRaces!.Count()))
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<RaceEntity>> GetAllByTypesAsync(RaceType[] types)
+        public async Task<ICollection<RaceEntity>> GetAllByTypesAsync(RaceType[] types)
         {
             return await _context.Races.Where(r => types.Contains(r.Type))
                 .Include(r => r.PigeonRaces!)
@@ -31,7 +31,7 @@ namespace Columbus.Welkom.Application.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<SimpleRaceEntity>> GetAllSimpleByTypesAsync(RaceType[] types)
+        public async Task<ICollection<SimpleRaceEntity>> GetAllSimpleByTypesAsync(RaceType[] types)
         {
             return await _context.Races.Where(r => types.Contains(r.Type))
                 .Select(r => new SimpleRaceEntity(r.Number, r.Type, r.Name, r.Code, r.StartTime, r.Latitude, r.Longitude, r.PigeonRaces!.Select(pr => pr.Pigeon!.Owner).Distinct().Count(), r.PigeonRaces!.Count()))

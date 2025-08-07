@@ -171,6 +171,10 @@
 
     private async Task ExportAsync()
     {
-        
+        _isExporting = true;
+
+        await PigeonSaleService.ExportAsync(_pigeonSales);
+
+        _isExporting = false;
     }
 }

@@ -1,5 +1,7 @@
 ﻿using Columbus.Models.Pigeon;
 using Columbus.Models.Race;
+using Columbus.Welkom.Application.Export;
+using Columbus.Welkom.Application.Models.DocumentModels;
 using Columbus.Welkom.Application.Models.Entities;
 using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Providers;
@@ -7,6 +9,7 @@ using Columbus.Welkom.Application.Repositories;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
 using Microsoft.Extensions.Options;
+using QuestPDF.Fluent;
 
 namespace Columbus.Welkom.Application.Services;
 
@@ -100,5 +103,28 @@ public class PigeonSaleService(
 
             await _pigeonSaleRepository.UpdateAsync(pigeonSaleToUpdate);
         }
+    }
+
+    public async Task ExportAsync(IEnumerable<PigeonSale> pigeonSales)
+    {
+        RaceEntity mostRecentRace = await _raceRepository.GetMostRecentRaceAsync();
+
+        RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
+        ICollection<SimpleRaceEntity> races = await _raceRepository.GetAllSimpleByTypesAsync(raceSettings.AppliedRaceTypes.PigeonSaleRaceTypes.ToArray());
+
+        PigeonSales documentPigeonSales = new()
+        {
+            ClubId = _appSettings.Value.Club,
+            Year = _appSettings.Value.Year,
+            AllPigeonSales = pigeonSales.ToList(),
+            Races = races.Select(r => r.ToSimpleRace()).ToList(),
+            LastRaceName = mostRecentRace.Name,
+            LastRaceDate = mostRecentRace.StartTime,
+        };
+
+        PigeonSaleDocument document = new(documentPigeonSales);
+        byte[] pdf = document.GeneratePdf();
+
+        await _filePicker.SaveFileAsync("Duivenverkoop.pdf", new MemoryStream(pdf));
     }
 }

@@ -7,4 +7,5 @@ public interface IPigeonSaleService
     Task<IEnumerable<PigeonSale>> GetAllAsync();
     Task DeleteAsync(PigeonSale pigeonSale);
     Task UpdateAsync(PigeonSale pigeonSale);
+    Task ExportAsync(IEnumerable<PigeonSale> pigeonSales);
 }
