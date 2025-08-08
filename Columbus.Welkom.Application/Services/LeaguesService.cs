@@ -58,32 +58,18 @@ namespace Columbus.Welkom.Application.Services
 
             Dictionary<OwnerId, IEnumerable<RacePoints>> pointsByOwnerId = races.SelectMany(r =>
             {
-                IEnumerable<PigeonRace> firstMarkedPigeons = r.PigeonRaces.GroupBy(pr => pr.OwnerId).Select(prg => prg.First(pr => pr.Mark == 1));
-                IEnumerable<PigeonRace?> secondMarkedPigeons = r.PigeonRaces.GroupBy(pr => pr.OwnerId).Select(prg => prg.FirstOrDefault(pr => pr.Mark == 2));
-                IEnumerable<PigeonRace?> topPigeons = r.PigeonRaces.GroupBy(pr => pr.OwnerId).Select(prg => prg.MinBy(pr => pr.Position));
-
-                return firstMarkedPigeons.Join(secondMarkedPigeons, fmp => fmp.OwnerId, smp => smp?.OwnerId, (fmp, smp) => (fmp, smp))
-                    .Join(topPigeons, mp => mp.fmp.OwnerId, tp => tp?.OwnerId, (mp, tp) => (mp.fmp, mp.smp, tp))
-                    .Select(p =>
+                return r.PigeonRaces.Where(pr => pr.Mark is 1 or 2 || pr.ArrivalOrder is 1 or 2)
+                    .GroupBy(pr => pr.OwnerId)
+                    .Select(prg =>
                     {
-                        double points = p.tp?.Points ?? 0;
-                        if (p.tp == p.fmp)
-                        {
-                            points += p.smp?.Points ?? 0;
-                        }
-                        else if (p.tp == p.smp)
-                        {
-                            points += p.fmp.Points ?? 0;
-                        }
-                        else
-                        {
-                            points += Math.Max(p.fmp.Points ?? 0, p.smp?.Points ?? 0);
-                        }
+                        PigeonRace? topMarkedPigeonRace = prg.Where(pr => pr.Mark is 1 or 2).MaxBy(pr => pr.Points);
+                        PigeonRace? topOtherPigeonRace = (topMarkedPigeonRace is null ? prg : prg.Except([topMarkedPigeonRace])).MaxBy(pr => pr.Points);
 
-                        return (p.fmp.OwnerId, new RacePoints { RaceCode = r.Code, Points = points });
+                        double points = (topMarkedPigeonRace?.Points + topOtherPigeonRace?.Points) ?? 0;
+                        return (prg.Key, new RacePoints { RaceCode = r.Code, Points = points } );
                     });
             })
-                .GroupBy(op => op.OwnerId)
+                .GroupBy(op => op.Key)
                 .ToDictionary(ops => ops.Key, ops => ops.Select(p => p.Item2));
 
             return new Leagues(leagues.Select(l => new League
