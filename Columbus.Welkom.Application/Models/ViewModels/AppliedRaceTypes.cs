@@ -9,4 +9,5 @@ public class AppliedRaceTypes
     public IList<RaceType> LeagueRaceTypes { get; set; } = [];
     public IList<RaceType> TeamRaceTypes { get; set; } = [];
     public IList<RaceType> PigeonSwapRaceTypes { get; set; } = [];
+    public IList<RaceType> PigeonSaleRaceTypes { get; set; } = [];
 }

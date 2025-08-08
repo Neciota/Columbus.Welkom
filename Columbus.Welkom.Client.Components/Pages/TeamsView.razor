@@ -186,6 +186,10 @@
 
     private async Task ExportAsync()
     {
+        _isExporting = true;
+
         await TeamsService.ExportAsync(_teams);
+
+        _isExporting = false;
     }
 }
