@@ -38,12 +38,12 @@ public class LeaguesDocument : BaseDocument
                         });
 
                         int position = 0;
-                        foreach (Models.ViewModels.LeagueOwner leagueOwner in league.LeagueOwners.OrderByDescending(lo => lo.Points))
+                        foreach (Models.ViewModels.LeagueOwner leagueOwner in league.LeagueOwners.OrderByDescending(lo => lo.TotalPoints))
                         {
                             position++;
                             table.Cell().Text($"{position}.").LineHeight(1.5f);
                             table.Cell().Text(leagueOwner.Owner?.Name).LineHeight(1.5f);
-                            table.Cell().Text(leagueOwner.Points.ToString()).LineHeight(1.5f);
+                            table.Cell().Text(leagueOwner.TotalPoints.ToString()).LineHeight(1.5f);
                         }
                     });
                 }

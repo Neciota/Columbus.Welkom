@@ -3,7 +3,7 @@ using Columbus.Models.Pigeon;
 
 namespace Columbus.Welkom.Application.Models.ViewModels;
 
-public class PigeonSale
+public class PigeonSale : IPoints
 {
     public int Id { get; set; }
     public Owner? Seller { get; set; }

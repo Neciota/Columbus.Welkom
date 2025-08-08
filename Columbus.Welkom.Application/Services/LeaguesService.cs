@@ -56,7 +56,7 @@ namespace Columbus.Welkom.Application.Services
                 racePointsSettingsByRaceType[re.Type].DecimalCount,
                 neutralizationTimesByRaceType[re.Type]));
 
-            Dictionary<OwnerId, double> pointsByOwnerId = races.SelectMany(r =>
+            Dictionary<OwnerId, IEnumerable<RacePoints>> pointsByOwnerId = races.SelectMany(r =>
             {
                 IEnumerable<PigeonRace> firstMarkedPigeons = r.PigeonRaces.GroupBy(pr => pr.OwnerId).Select(prg => prg.First(pr => pr.Mark == 1));
                 IEnumerable<PigeonRace?> secondMarkedPigeons = r.PigeonRaces.GroupBy(pr => pr.OwnerId).Select(prg => prg.FirstOrDefault(pr => pr.Mark == 2));
@@ -64,11 +64,27 @@ namespace Columbus.Welkom.Application.Services
 
                 return firstMarkedPigeons.Join(secondMarkedPigeons, fmp => fmp.OwnerId, smp => smp?.OwnerId, (fmp, smp) => (fmp, smp))
                     .Join(topPigeons, mp => mp.fmp.OwnerId, tp => tp?.OwnerId, (mp, tp) => (mp.fmp, mp.smp, tp))
-                    .Select(p => (p.fmp.OwnerId, p.tp?.Pigeon == p.fmp.Pigeon ? p.tp.Points + p.smp?.Points : p.tp?.Points + p.fmp.Points));
+                    .Select(p =>
+                    {
+                        double points = p.tp?.Points ?? 0;
+                        if (p.tp == p.fmp)
+                        {
+                            points += p.smp?.Points ?? 0;
+                        }
+                        else if (p.tp == p.smp)
+                        {
+                            points += p.fmp.Points ?? 0;
+                        }
+                        else
+                        {
+                            points += Math.Max(p.fmp.Points ?? 0, p.smp?.Points ?? 0);
+                        }
+
+                        return (p.fmp.OwnerId, new RacePoints { RaceCode = r.Code, Points = points });
+                    });
             })
                 .GroupBy(op => op.OwnerId)
-                .Select(ops => (ops.Key, ops.Select(p => p.Item2 ?? 0d).Sum()))
-                .ToDictionary();
+                .ToDictionary(ops => ops.Key, ops => ops.Select(p => p.Item2));
 
             return new Leagues(leagues.Select(l => new League
             {
@@ -76,7 +92,7 @@ namespace Columbus.Welkom.Application.Services
                 Name = l.Name,
                 LeagueOwners = l.LeagueOwners.Select(lo => new LeagueOwner { 
                     Owner = lo.Owner!.ToOwner(),
-                    Points = pointsByOwnerId.GetValueOrDefault(lo.OwnerId, 0),
+                    RacePoints = pointsByOwnerId.GetValueOrDefault(lo.OwnerId)?.ToList() ?? [],
                 }).ToHashSet()
             }).ToList());
         }

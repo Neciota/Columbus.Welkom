@@ -85,7 +85,7 @@
                                     </RadzenDropDown>
                                 </EditTemplate>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="LeagueOwner" Title="Punten" Property="@nameof(LeagueOwner.Points)" Width="120px" />
+                            <RadzenDataGridColumn TItem="LeagueOwner" Title="Punten" Property="@nameof(LeagueOwner.TotalPoints)" Width="120px" />
                             <RadzenDataGridColumn TItem="LeagueOwner" Title="" Width="120px">
                                 <Template Context="leagueOwner">
                                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
@@ -111,6 +111,21 @@
                                 </EditTemplate>
                             </RadzenDataGridColumn>
                         </Columns>
+                        <Template Context="leagueOwner">
+                            <RadzenCard Variant="Variant.Outlined">
+                                <RadzenRow AlignItems="AlignItems.Center">
+                                    @foreach (RacePoints racePoints in leagueOwner.RacePoints)
+                                    {
+                                        <RadzenColumn Size="3" SizeLG="2">
+                                            @racePoints.RaceCode:
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="3" SizeLG="2">
+                                            @racePoints.Points
+                                        </RadzenColumn>
+                                    }
+                                </RadzenRow>
+                            </RadzenCard>
+                        </Template>
                     </RadzenDataGrid>
                 </RadzenCard>
             </RadzenColumn>
@@ -187,7 +202,7 @@
 
     private async Task AddOwnerToLeagueAsync(League league)
     {
-        LeagueOwner newOwner = new() { Owner = null, Points = 0 };
+        LeagueOwner newOwner = new() { Owner = null, RacePoints = [] };
         _leagues.AddToLeague(newOwner, league.Rank);
 
         await _dataGridsByLeagueRank[league.Rank].InsertRow(newOwner);

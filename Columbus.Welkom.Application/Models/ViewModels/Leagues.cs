@@ -11,7 +11,7 @@
 
         public IEnumerable<LeagueOwner> AllParticipants => _leagues.SelectMany(l => l.LeagueOwners);
 
-        public IEnumerable<LeagueOwner> GetLeagueOwnersByLeagueRank(int leagueRank) => (_leagues.FirstOrDefault(p => p.Rank == leagueRank)?.LeagueOwners ?? []).OrderByDescending(p => p.Points);
+        public IEnumerable<LeagueOwner> GetLeagueOwnersByLeagueRank(int leagueRank) => (_leagues.FirstOrDefault(p => p.Rank == leagueRank)?.LeagueOwners ?? []).OrderByDescending(p => p.TotalPoints);
 
         public IEnumerable<League> AllLeagues => _leagues.OrderBy(l => l.Rank);
 
