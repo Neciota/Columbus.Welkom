@@ -57,7 +57,9 @@ public class TeamsService(
                 Position = to.Position,
                 Points = pointsByOwnerId.GetValueOrDefault(to.OwnerId, 0)
             }).ToHashSet()
-        }).ToList();
+        })
+            .OrderByDescending(t => t.TotalPoints)
+            .ToList();
     }
 
     public async Task DeleteTeamAsync(Team team)
