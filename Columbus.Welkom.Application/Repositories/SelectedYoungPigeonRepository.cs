@@ -7,32 +7,38 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Columbus.Welkom.Application.Repositories
 {
-    public class SelectedYoungPigeonRepository : BaseRepository<SelectedYoungPigeonEntity>, ISelectedYoungPigeonRepository
+    public class SelectedYoungPigeonRepository(IDbContextFactory<DataContext> contextFactory) : BaseRepository<SelectedYoungPigeonEntity>(contextFactory), ISelectedYoungPigeonRepository
     {
-        public SelectedYoungPigeonRepository(DataContext context): base(context) { }
-
         public async Task<int> DeleteByOwnerAsync(OwnerId ownerId)
         {
-            return await _context.SelectedYoungPigeons.Where(syp => syp.OwnerId == ownerId)
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.SelectedYoungPigeons.Where(syp => syp.OwnerId == ownerId)
                 .ExecuteDeleteAsync();
         }
 
         public override async Task<IEnumerable<SelectedYoungPigeonEntity>> GetAllAsync()
         {
-            return await _context.SelectedYoungPigeons.Include(syp => syp.Owner)
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.SelectedYoungPigeons.Include(syp => syp.Owner)
                 .Include(syp => syp.Pigeon)
                 .ToListAsync();
         }
 
         public async Task<SelectedYoungPigeonEntity?> GetByOwnerAsync(OwnerId ownerId)
         {
-            return await _context.SelectedYoungPigeons.Where(syp => syp.OwnerId == ownerId)
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.SelectedYoungPigeons.Where(syp => syp.OwnerId == ownerId)
                 .FirstOrDefaultAsync();
         }
 
         public async Task<SelectedYoungPigeonEntity?> GetByPigeonIdAsync(PigeonId pigeonId)
         {
-            return await _context.SelectedYoungPigeons.Where(syp => syp.Pigeon!.Id == pigeonId)
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.SelectedYoungPigeons.Where(syp => syp.Pigeon!.Id == pigeonId)
                 .Include(syp => syp.Pigeon)
                 .Include(syp => syp.Owner)
                 .FirstOrDefaultAsync();

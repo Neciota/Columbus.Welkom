@@ -5,18 +5,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Columbus.Welkom.Application.Repositories;
 
-public class LeagueRepository(DataContext context) : BaseRepository<LeagueEntity>(context), ILeagueRepository
+public class LeagueRepository(IDbContextFactory<DataContext> contextFactory) : BaseRepository<LeagueEntity>(contextFactory), ILeagueRepository
 {
     public async Task<ICollection<LeagueEntity>> GetAllWithOwnersAsync()
     {
-        return await _context.Leagues.Include(l => l.LeagueOwners)
+        DataContext context = _contextFactory.CreateDbContext();
+
+        return await context.Leagues.Include(l => l.LeagueOwners)
             .ThenInclude(lo => lo.Owner)
             .ToListAsync();
     }
 
     public async Task<LeagueEntity?> GetByRankAsync(int rank)
     {
-        return await _context.Leagues.Include(l => l.LeagueOwners)
+        DataContext context = _contextFactory.CreateDbContext();
+
+        return await context.Leagues.Include(l => l.LeagueOwners)
             .ThenInclude(lo => lo.Owner)
             .FirstOrDefaultAsync(l => l.Rank == rank);
     }

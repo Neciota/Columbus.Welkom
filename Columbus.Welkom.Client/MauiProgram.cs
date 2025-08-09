@@ -74,7 +74,7 @@ namespace Columbus.Welkom.Client
             builder.Services.AddTransient<IPigeonSerializer, PigeonSerializer>();
             builder.Services.AddTransient<IRaceSerializer, RaceSerializer>();
             
-            builder.Services.AddDbContext<DataContext>(ServiceLifetime.Transient);
+            builder.Services.AddDbContextFactory<DataContext>();
 
             builder.Services.AddSingleton<ILogger>(builder => new DebugLoggerProvider().CreateLogger("debug logger"));
 

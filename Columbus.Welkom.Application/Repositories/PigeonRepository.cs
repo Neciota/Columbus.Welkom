@@ -6,13 +6,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Columbus.Welkom.Application.Repositories
 {
-    public class PigeonRepository : BaseRepository<PigeonEntity>, IPigeonRepository
+    public class PigeonRepository(IDbContextFactory<DataContext> contextFactory) : BaseRepository<PigeonEntity>(contextFactory), IPigeonRepository
     {
-        public PigeonRepository(DataContext context) : base(context) { }
-
         public async Task<PigeonEntity?> GetByPigeonIdAsync(PigeonId pigeonId)
         {
-            return await _context.Pigeons.Where(p => p.Id.CountryCode == pigeonId.CountryCode)
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.Pigeons.Where(p => p.Id.CountryCode == pigeonId.CountryCode)
                 .Where(p => p.Id.Year == pigeonId.Year)
                 .Where(p => p.Id.RingNumber == pigeonId.RingNumber)
                 .FirstOrDefaultAsync();
@@ -20,9 +20,11 @@ namespace Columbus.Welkom.Application.Repositories
 
         public async Task<IEnumerable<PigeonEntity>> GetByPigeonIdsAsync(IEnumerable<PigeonId> pigeonIds)
         {
+            DataContext context = _contextFactory.CreateDbContext();
+
             HashSet<PigeonId> uniqueIds = pigeonIds.ToHashSet();
 
-            var result = await _context.Pigeons
+            var result = await context.Pigeons
                 .Where(p => pigeonIds.Select(p => p.CountryCode).Contains(p.Id.CountryCode))
                 .Where(p => pigeonIds.Select(p => p.Year).Contains(p.Id.Year))
                 .Where(p => pigeonIds.Select(p => p.RingNumber).Contains(p.Id.RingNumber))

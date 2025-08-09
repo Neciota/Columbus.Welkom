@@ -6,25 +6,29 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Columbus.Welkom.Application.Repositories
 {
-    public class OwnerRepository : BaseRepository<OwnerEntity>, IOwnerRepository
+    public class OwnerRepository(IDbContextFactory<DataContext> contextFactory) : BaseRepository<OwnerEntity>(contextFactory), IOwnerRepository
     {
-        public OwnerRepository(DataContext context) : base(context) { }
-
         public async Task<IEnumerable<OwnerEntity>> GetAllByOwnerIdsAsync(IEnumerable<OwnerId> ownerIds)
         {
-            return await _context.Owners.Where(o => ownerIds.Contains(o.OwnerId))
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.Owners.Where(o => ownerIds.Contains(o.OwnerId))
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<OwnerEntity>> GetAllWithAllPigeonsAsync()
         {
-            return await _context.Owners.Include(o => o.Pigeons)
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.Owners.Include(o => o.Pigeons)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<OwnerEntity>> GetAllWithPigeonsForYearAsync(int year, bool includeOwnersWithoutPigeons)
         {
-            var query = _context.Owners.AsQueryable();
+            DataContext context = _contextFactory.CreateDbContext();
+
+            var query = context.Owners.AsQueryable();
 
             if (!includeOwnersWithoutPigeons)
                 query = query.Where(o => o.Pigeons!.Any());
@@ -35,7 +39,9 @@ namespace Columbus.Welkom.Application.Repositories
 
         public async Task<IEnumerable<OwnerEntity>> GetByOwnerIdsAsync(IEnumerable<OwnerId> ownerIds)
         {
-            return await _context.Owners.Where(o => ownerIds.Contains(o.OwnerId))
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.Owners.Where(o => ownerIds.Contains(o.OwnerId))
                 .ToListAsync();
         }
     }

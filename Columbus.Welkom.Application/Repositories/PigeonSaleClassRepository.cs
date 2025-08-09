@@ -5,11 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Columbus.Welkom.Application.Repositories;
 
-public class PigeonSaleClassRepository(DataContext context) : BaseRepository<PigeonSaleClassEntity>(context), IPigeonSaleClassRepository
+public class PigeonSaleClassRepository(IDbContextFactory<DataContext> contextFactory) : BaseRepository<PigeonSaleClassEntity>(contextFactory), IPigeonSaleClassRepository
 {
     public async Task<ICollection<PigeonSaleClassEntity>> GetAllWithPigeonSalesAsync()
     {
-        return await _context.PigeonSaleClasses
+        DataContext context = _contextFactory.CreateDbContext();
+
+        return await context.PigeonSaleClasses
             .Include(psc => psc.PigeonSales)
             .ThenInclude(psc => psc.Seller)
             .Include(psc => psc.PigeonSales)
@@ -21,6 +23,8 @@ public class PigeonSaleClassRepository(DataContext context) : BaseRepository<Pig
 
     public async Task<PigeonSaleClassEntity?> GetByIdAsync(int id)
     {
-        return await _context.PigeonSaleClasses.FirstOrDefaultAsync(psc => psc.Id == id);
+        DataContext context = _contextFactory.CreateDbContext();
+
+        return await context.PigeonSaleClasses.FirstOrDefaultAsync(psc => psc.Id == id);
     }
 }

@@ -7,36 +7,44 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Columbus.Welkom.Application.Repositories
 {
-    public class SelectedYearPigeonRepository : BaseRepository<SelectedYearPigeonEntity>, ISelectedYearPigeonRepository
+    public class SelectedYearPigeonRepository(IDbContextFactory<DataContext> contextFactory) : BaseRepository<SelectedYearPigeonEntity>(contextFactory), ISelectedYearPigeonRepository
     {
-        public SelectedYearPigeonRepository(DataContext context): base(context) { }
-
         public async Task<int> DeleteByOwnerAsync(OwnerId ownerId)
         {
-            return await _context.SelectedYearPigeons.Where(syp => syp.OwnerId == ownerId)
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.SelectedYearPigeons.Where(syp => syp.OwnerId == ownerId)
                 .ExecuteDeleteAsync();
         }
 
         public override async Task<IEnumerable<SelectedYearPigeonEntity>> GetAllAsync()
         {
-            return await _context.SelectedYearPigeons.Include(syp => syp.Owner)
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.SelectedYearPigeons.Include(syp => syp.Owner)
                 .Include(syp => syp.Pigeon)
                 .ToListAsync();
         }
 
         public async Task<SelectedYearPigeonEntity?> GetByIdAsync(int selectedYearPigeonId)
         {
-            return await _context.SelectedYearPigeons.FirstOrDefaultAsync(syp => syp.Id == selectedYearPigeonId);
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.SelectedYearPigeons.FirstOrDefaultAsync(syp => syp.Id == selectedYearPigeonId);
         }
 
         public async Task<SelectedYearPigeonEntity?> GetByOwnerAsync(OwnerId ownerId)
         {
-            return await _context.SelectedYearPigeons.FirstOrDefaultAsync(syp => syp.OwnerId == ownerId);
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.SelectedYearPigeons.FirstOrDefaultAsync(syp => syp.OwnerId == ownerId);
         }
 
         public async Task<SelectedYearPigeonEntity?> GetByPigeonIdAsync(PigeonId pigeonId)
         {
-            return await _context.SelectedYearPigeons.Where(syp => syp.PigeonId == pigeonId)
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.SelectedYearPigeons.Where(syp => syp.PigeonId == pigeonId)
                 .Include(syp => syp.Pigeon)
                 .Include(syp => syp.Owner)
                 .FirstOrDefaultAsync();

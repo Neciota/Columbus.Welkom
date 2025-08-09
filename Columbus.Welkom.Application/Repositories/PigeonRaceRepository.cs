@@ -5,11 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Columbus.Welkom.Application.Repositories
 {
-    public class PigeonRaceRepository(DataContext context) : BaseRepository<PigeonRaceEntity>(context), IPigeonRaceRepository
+    public class PigeonRaceRepository(IDbContextFactory<DataContext> contextFactory) : BaseRepository<PigeonRaceEntity>(contextFactory), IPigeonRaceRepository
     {
         public async Task DeleteAllByRaceCodeAsync(string raceCode)
         {
-            await _context.PigeonRaces.Where(pr => pr.RaceCode == raceCode)
+            DataContext context = _contextFactory.CreateDbContext();
+
+            await context.PigeonRaces.Where(pr => pr.RaceCode == raceCode)
                 .ExecuteDeleteAsync();
         }
     }

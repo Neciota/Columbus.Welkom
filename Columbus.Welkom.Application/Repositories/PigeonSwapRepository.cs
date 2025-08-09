@@ -7,13 +7,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Columbus.Welkom.Application.Repositories
 {
-    public class PigeonSwapRepository : BaseRepository<PigeonSwapEntity>, IPigeonSwapRepository
+    public class PigeonSwapRepository(IDbContextFactory<DataContext> contextFactory) : BaseRepository<PigeonSwapEntity>(contextFactory), IPigeonSwapRepository
     {
-        public PigeonSwapRepository(DataContext context) : base(context) { }
-
         public async Task<IEnumerable<PigeonSwapEntity>> GetAllWithOwnersAndPigeonAsync()
         {
-            return await _context.PigeonSwaps.Include(ps => ps.Player)
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.PigeonSwaps.Include(ps => ps.Player)
                 .Include(ps => ps.Owner)
                 .Include(ps => ps.Pigeon)
                 .Include(ps => ps.CoupledPlayer)
@@ -22,14 +22,18 @@ namespace Columbus.Welkom.Application.Repositories
 
         public async Task<int> DeleteByPlayerAndPigeonAsync(OwnerId playerId, PigeonId pigeonId)
         {
-            return await _context.PigeonSwaps.Where(ps => ps.PlayerId == playerId)
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.PigeonSwaps.Where(ps => ps.PlayerId == playerId)
                 .Where(ps => ps.Pigeon!.Id == pigeonId)
                 .ExecuteDeleteAsync();
         }
 
         public async Task<PigeonSwapEntity?> GetByIdAsync(int id)
         {
-            return await _context.PigeonSwaps.SingleOrDefaultAsync(ps => ps.Id == id);
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.PigeonSwaps.SingleOrDefaultAsync(ps => ps.Id == id);
         }
     }
 }

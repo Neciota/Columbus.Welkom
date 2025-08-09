@@ -7,63 +7,76 @@ namespace Columbus.Welkom.Application.Repositories
 {
     public class BaseRepository<T> : IBaseRepository<T> where T : class, IEntity
     {
-        protected readonly DataContext _context;
+        protected readonly IDbContextFactory<DataContext> _contextFactory;
 
-        public BaseRepository(DataContext context)
+        public BaseRepository(IDbContextFactory<DataContext> contextFactory)
         {
-            _context = context;
-            _context.Database.EnsureCreated();
+            _contextFactory = contextFactory;
         }
 
         public virtual async Task<IEnumerable<T>> GetAllAsync()
         {
-            return await _context.Set<T>().ToListAsync();
+            DataContext context = _contextFactory.CreateDbContext();
+
+            return await context.Set<T>().ToListAsync();
         }
 
         public virtual async Task<T> AddAsync(T entity)
         {
-            _context.Add(entity);
-            await _context.SaveChangesAsync();
+            DataContext context = _contextFactory.CreateDbContext();
+
+            context.Add(entity);
+            await context.SaveChangesAsync();
 
             return entity;
         }
 
         public virtual async Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities)
         {
-            _context.AddRange(entities);
-            await _context.SaveChangesAsync();
+            DataContext context = _contextFactory.CreateDbContext();
+
+            context.AddRange(entities);
+            await context.SaveChangesAsync();
 
             return entities;
         }
 
         public virtual async Task<T> UpdateAsync(T entity)
         {
-            _context.Update(entity);
-            await _context.SaveChangesAsync();
+            DataContext context = _contextFactory.CreateDbContext();
+
+            context.Update(entity);
+            await context.SaveChangesAsync();
 
             return entity;
         }
 
         public virtual async Task<IEnumerable<T>> UpdateRangeAsync(IEnumerable<T> entities)
         {
-            _context.UpdateRange(entities);
-            await _context.SaveChangesAsync();
+            DataContext context = _contextFactory.CreateDbContext();
+
+            context.UpdateRange(entities);
+            await context.SaveChangesAsync();
 
             return entities;
         }
 
         public virtual async Task<bool> DeleteAsync(T entity)
         {
-            _context.Remove(entity);
-            int count = await _context.SaveChangesAsync();
+            DataContext context = _contextFactory.CreateDbContext();
+
+            context.Remove(entity);
+            int count = await context.SaveChangesAsync();
 
             return count == 1;
         }
 
         public virtual async Task<bool> DeleteRangeAsync(IEnumerable<T> entities)
         {
-            _context.RemoveRange(entities);
-            int count = await _context.SaveChangesAsync();
+            DataContext context = _contextFactory.CreateDbContext();
+
+            context.RemoveRange(entities);
+            int count = await context.SaveChangesAsync();
 
             return count == entities.Count();
         }
