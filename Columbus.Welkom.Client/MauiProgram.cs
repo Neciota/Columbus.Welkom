@@ -56,6 +56,7 @@ namespace Columbus.Welkom.Client
             builder.Services.AddTransient<ITeamsService, TeamsService>();
 
             builder.Services.AddTransient<ILeagueRepository, LeagueRepository>();
+            builder.Services.AddTransient<ILeagueOwnerRepository, LeagueOwnerRepository>();
             builder.Services.AddTransient<IOwnerRepository, OwnerRepository>();
             builder.Services.AddTransient<IPigeonRaceRepository, PigeonRaceRepository>();
             builder.Services.AddTransient<IPigeonRepository, PigeonRepository>();

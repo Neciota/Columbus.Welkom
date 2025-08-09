@@ -2,7 +2,7 @@
 
 namespace Columbus.Welkom.Application.Models.Entities;
 
-public class LeagueOwnerEntity
+public class LeagueOwnerEntity : IEntity
 {
     public int LeagueRank { get; set; }
     public OwnerId OwnerId { get; set; }

@@ -14,14 +14,21 @@ namespace Columbus.Welkom.Application.Services
     public class LeaguesService : ILeaguesService
     {
         private readonly ILeagueRepository _leagueRepository;
+        private readonly ILeagueOwnerRepository _leagueOwnerRepository;
         private readonly IRaceRepository _raceRepository;
         private readonly SettingsProvider _settingsProvider;
         private readonly IOptions<AppSettings> _appSettings;
         private readonly IFilePicker _filePicker;
 
-        public LeaguesService(ILeagueRepository leagueRepository, IRaceRepository raceRepository, SettingsProvider settingsProvider, IOptions<AppSettings> appSettings, IFilePicker filePicker)
+        public LeaguesService(ILeagueRepository leagueRepository,
+            ILeagueOwnerRepository leagueOwnerRepository,
+            IRaceRepository raceRepository, 
+            SettingsProvider settingsProvider, 
+            IOptions<AppSettings> appSettings, 
+            IFilePicker filePicker)
         {
             _leagueRepository = leagueRepository;
+            _leagueOwnerRepository = leagueOwnerRepository;
             _raceRepository = raceRepository;
             _settingsProvider = settingsProvider;
             _appSettings = appSettings;
@@ -95,9 +102,10 @@ namespace Columbus.Welkom.Application.Services
 
             IEnumerable<LeagueOwnerEntity> leagueOwnersToAdd = league.LeagueOwners.ExceptBy(existingLeague.LeagueOwners.Select(lo => lo.OwnerId), lo => lo.Owner!.Id)
                 .Select(lo => new LeagueOwnerEntity { LeagueRank = league.Rank, OwnerId = lo.Owner!.Id });
-            IEnumerable<LeagueOwnerEntity> leagueOwnersToKeep = existingLeague.LeagueOwners.IntersectBy(league.LeagueOwners.Select(lo => lo.Owner!.Id), lo => lo.OwnerId);
+            IEnumerable<LeagueOwnerEntity> leagueOwnersToDelete = existingLeague.LeagueOwners.ExceptBy(league.LeagueOwners.Select(lo => lo.Owner!.Id), lo => lo.OwnerId);
 
-            existingLeague.LeagueOwners = leagueOwnersToKeep.Concat(leagueOwnersToAdd).ToList();
+            await _leagueOwnerRepository.AddRangeAsync(leagueOwnersToAdd);
+            await _leagueOwnerRepository.DeleteRangeAsync(leagueOwnersToDelete);
             await _leagueRepository.UpdateAsync(existingLeague);
         }
 
