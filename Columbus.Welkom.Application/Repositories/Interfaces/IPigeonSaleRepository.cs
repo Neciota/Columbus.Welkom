@@ -1,7 +1,6 @@
 ﻿using Columbus.Welkom.Application.Models.Entities;
-using Columbus.Welkom.Application.Repositories.Interfaces;
 
-namespace Columbus.Welkom.Application.Repositories;
+namespace Columbus.Welkom.Application.Repositories.Interfaces;
 
 public interface IPigeonSaleRepository : IBaseRepository<PigeonSaleEntity>
 {

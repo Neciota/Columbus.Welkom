@@ -216,6 +216,22 @@ namespace Columbus.Welkom.Application.Migrations
                     b.ToTable("pigeon_race", (string)null);
                 });
 
+            modelBuilder.Entity("Columbus.Welkom.Application.Models.Entities.PigeonSaleClassEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("pigeon_sale_class", (string)null);
+                });
+
             modelBuilder.Entity("Columbus.Welkom.Application.Models.Entities.PigeonSaleEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -225,6 +241,9 @@ namespace Columbus.Welkom.Application.Migrations
                     b.Property<int>("BuyerId")
                         .HasColumnType("INTEGER")
                         .HasColumnName("buyer_id");
+
+                    b.Property<int>("ClassId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("SellerId")
                         .HasColumnType("INTEGER")
@@ -269,6 +288,8 @@ namespace Columbus.Welkom.Application.Migrations
 
                     b.HasIndex("BuyerId")
                         .IsUnique();
+
+                    b.HasIndex("ClassId");
 
                     b.HasIndex("SellerId")
                         .IsUnique();
@@ -537,7 +558,7 @@ namespace Columbus.Welkom.Application.Migrations
                         .IsRequired();
 
                     b.HasOne("Columbus.Welkom.Application.Models.Entities.TeamEntity", "Team")
-                        .WithMany()
+                        .WithMany("TeamOwners")
                         .HasForeignKey("TeamNumber")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -585,6 +606,12 @@ namespace Columbus.Welkom.Application.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Columbus.Welkom.Application.Models.Entities.PigeonSaleClassEntity", "Class")
+                        .WithMany("PigeonSales")
+                        .HasForeignKey("ClassId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Columbus.Welkom.Application.Models.Entities.OwnerEntity", "Seller")
                         .WithOne("PigeonSale")
                         .HasForeignKey("Columbus.Welkom.Application.Models.Entities.PigeonSaleEntity", "SellerId")
@@ -598,6 +625,8 @@ namespace Columbus.Welkom.Application.Migrations
                         .IsRequired();
 
                     b.Navigation("Buyer");
+
+                    b.Navigation("Class");
 
                     b.Navigation("Pigeon");
 
@@ -718,9 +747,19 @@ namespace Columbus.Welkom.Application.Migrations
                     b.Navigation("SelectedYoungPigeonEntity");
                 });
 
+            modelBuilder.Entity("Columbus.Welkom.Application.Models.Entities.PigeonSaleClassEntity", b =>
+                {
+                    b.Navigation("PigeonSales");
+                });
+
             modelBuilder.Entity("Columbus.Welkom.Application.Models.Entities.RaceEntity", b =>
                 {
                     b.Navigation("PigeonRaces");
+                });
+
+            modelBuilder.Entity("Columbus.Welkom.Application.Models.Entities.TeamEntity", b =>
+                {
+                    b.Navigation("TeamOwners");
                 });
 #pragma warning restore 612, 618
         }

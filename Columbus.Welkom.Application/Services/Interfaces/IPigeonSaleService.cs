@@ -4,8 +4,11 @@ namespace Columbus.Welkom.Application.Services.Interfaces;
 
 public interface IPigeonSaleService
 {
-    Task<IEnumerable<PigeonSale>> GetAllAsync();
+    Task<ICollection<PigeonSaleClass>> GetAllClassesAsync();
     Task DeleteAsync(PigeonSale pigeonSale);
-    Task UpdateAsync(PigeonSale pigeonSale);
-    Task ExportAsync(IEnumerable<PigeonSale> pigeonSales);
+    Task UpdateAsync(PigeonSaleClass pigeonSaleClass, PigeonSale pigeonSale);
+    Task ExportAsync(IEnumerable<PigeonSaleClass> pigeonSaleClasses);
+    Task AddClassAsync(PigeonSaleClass pigeonSaleClass);
+    Task UpdateClassAsync(PigeonSaleClass pigeonSaleClass);
+    Task DeleteClassAsync(PigeonSaleClass pigeonSaleClass);
 }

@@ -5,7 +5,6 @@ using Columbus.Welkom.Application.Models.DocumentModels;
 using Columbus.Welkom.Application.Models.Entities;
 using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Providers;
-using Columbus.Welkom.Application.Repositories;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
 using Microsoft.Extensions.Options;
@@ -14,12 +13,14 @@ using QuestPDF.Fluent;
 namespace Columbus.Welkom.Application.Services;
 
 public class PigeonSaleService(
+    IPigeonSaleClassRepository pigeonSaleClassRepository,
     IPigeonSaleRepository pigeonSaleRepository,
     IRaceRepository raceRepository,
     SettingsProvider settingsProvider,
     IOptions<AppSettings> appSettings,
     IFilePicker filePicker) : IPigeonSaleService
 {
+    private readonly IPigeonSaleClassRepository _pigeonSaleClassRepository = pigeonSaleClassRepository;
     private readonly IPigeonSaleRepository _pigeonSaleRepository = pigeonSaleRepository;
     private readonly IRaceRepository _raceRepository = raceRepository;
     private readonly SettingsProvider _settingsProvider = settingsProvider;
@@ -35,10 +36,41 @@ public class PigeonSaleService(
         await _pigeonSaleRepository.DeleteAsync(pigeonSaleToDelete);
     }
 
-    public async Task<IEnumerable<PigeonSale>> GetAllAsync()
+    public async Task AddClassAsync(PigeonSaleClass pigeonSaleClass)
     {
-        ICollection<PigeonSaleEntity> pigeonSales = await _pigeonSaleRepository.GetAllWithOwnersAndPigeonsAsync();
-        HashSet<PigeonId> pigeonsIdsInCompetition = pigeonSales.Select(ps => ps.PigeonId).ToHashSet();
+        PigeonSaleClassEntity pigeonSaleClassToAdd = new()
+        {
+            Id = pigeonSaleClass.Id,
+            Name = pigeonSaleClass.Name,
+        };
+
+        await _pigeonSaleClassRepository.AddAsync(pigeonSaleClassToAdd);
+    }
+
+    public async Task UpdateClassAsync(PigeonSaleClass pigeonSaleClass)
+    {
+        PigeonSaleClassEntity? pigeonSaleClassToUpdate = await _pigeonSaleClassRepository.GetByIdAsync(pigeonSaleClass.Id);
+        if (pigeonSaleClassToUpdate is null)
+            throw new ArgumentException("No pigeon sale class with this id exists.");
+
+        pigeonSaleClassToUpdate.Name = pigeonSaleClass.Name;
+
+        await _pigeonSaleClassRepository.UpdateAsync(pigeonSaleClassToUpdate);
+    }
+
+    public async Task DeleteClassAsync(PigeonSaleClass pigeonSaleClass)
+    {
+        PigeonSaleClassEntity? pigeonSaleClassToUpdate = await _pigeonSaleClassRepository.GetByIdAsync(pigeonSaleClass.Id);
+        if (pigeonSaleClassToUpdate is null)
+            throw new ArgumentException("No pigeon sale class with this id exists.");
+
+        await _pigeonSaleClassRepository.DeleteAsync(pigeonSaleClassToUpdate);
+    }
+
+    public async Task<ICollection<PigeonSaleClass>> GetAllClassesAsync()
+    {
+        ICollection<PigeonSaleClassEntity> pigeonSaleClasses = await _pigeonSaleClassRepository.GetAllWithPigeonSalesAsync();
+        HashSet<PigeonId> pigeonsIdsInCompetition = pigeonSaleClasses.SelectMany(psc => psc.PigeonSales).Select(ps => ps.PigeonId).ToHashSet();
 
         RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
         Dictionary<RaceType, RacePointsSettings> racePointsSettingsByRaceType = raceSettings.RacePointsSettings.ToDictionary(rps => rps.RaceType);
@@ -56,16 +88,21 @@ public class PigeonSaleService(
             .GroupBy(prp => prp.PigeonId)
             .ToDictionary(prpg => prpg.Key, prpg => prpg.Select(prp => prp.RacePoints));
 
-        return pigeonSales.Select(ps => new PigeonSale
+        return pigeonSaleClasses.Select(psc => new PigeonSaleClass
         {
-            Id = ps.Id,
-            Seller = ps.Seller?.ToOwner(),
-            Buyer = ps.Buyer?.ToOwner(),
-            Pigeon = ps.Pigeon?.ToPigeon(),
-            RacePoints = racePointsByPigeon.GetValueOrDefault(ps.PigeonId)?.ToList() ?? []
-        })
-            .OrderByDescending(ps => ps.TotalPoints)
-            .ToList();
+            Id = psc.Id,
+            Name = psc.Name,
+            PigeonSales = psc.PigeonSales.Select(ps => new PigeonSale
+            {
+                Id = ps.Id,
+                Seller = ps.Seller?.ToOwner(),
+                Buyer = ps.Buyer?.ToOwner(),
+                Pigeon = ps.Pigeon?.ToPigeon(),
+                RacePoints = racePointsByPigeon.GetValueOrDefault(ps.PigeonId)?.ToList() ?? []
+            })
+                .OrderByDescending(ps => ps.TotalPoints)
+                .ToList(),
+        }).ToList();
     }
 
     private IEnumerable<(PigeonId PigeonId, RacePoints RacePoints)> GetRacePointsFromRace(HashSet<PigeonId> pigeonsIdsInCompetition, Race race)
@@ -86,7 +123,7 @@ public class PigeonSaleService(
             }));
     }
 
-    public async Task UpdateAsync(PigeonSale pigeonSale)
+    public async Task UpdateAsync(PigeonSaleClass pigeonSaleClass, PigeonSale pigeonSale)
     {
         PigeonSaleEntity? pigeonSaleToUpdate = await _pigeonSaleRepository.GetByIdAsync(pigeonSale.Id);
 
@@ -97,6 +134,7 @@ public class PigeonSaleService(
                 SellerId = pigeonSale.Seller!.Id,
                 BuyerId = pigeonSale.Buyer!.Id,
                 PigeonId = pigeonSale.Pigeon!.Id,
+                ClassId = pigeonSaleClass.Id,
             };
 
             await _pigeonSaleRepository.AddAsync(pigeonSaleToAdd);
@@ -106,12 +144,13 @@ public class PigeonSaleService(
             pigeonSaleToUpdate.SellerId = pigeonSale.Seller!.Id;
             pigeonSaleToUpdate.BuyerId = pigeonSale.Buyer!.Id;
             pigeonSaleToUpdate.PigeonId = pigeonSale.Pigeon!.Id;
+            pigeonSaleToUpdate.ClassId = pigeonSaleClass.Id;
 
             await _pigeonSaleRepository.UpdateAsync(pigeonSaleToUpdate);
         }
     }
 
-    public async Task ExportAsync(IEnumerable<PigeonSale> pigeonSales)
+    public async Task ExportAsync(IEnumerable<PigeonSaleClass> pigeonSaleClasses)
     {
         RaceEntity mostRecentRace = await _raceRepository.GetMostRecentRaceAsync();
 
@@ -122,7 +161,7 @@ public class PigeonSaleService(
         {
             ClubId = _appSettings.Value.Club,
             Year = _appSettings.Value.Year,
-            AllPigeonSales = pigeonSales.ToList(),
+            PigeonSaleClasses = pigeonSaleClasses.ToList(),
             Races = races.Select(r => r.ToSimpleRace()).ToList(),
             LastRaceName = mostRecentRace.Name,
             LastRaceDate = mostRecentRace.StartTime,

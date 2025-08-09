@@ -1,5 +1,4 @@
-﻿using Columbus.Models.Race;
-using Columbus.Welkom.Application.Models.DocumentModels;
+﻿using Columbus.Welkom.Application.Models.DocumentModels;
 using Columbus.Welkom.Application.Models.ViewModels;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -17,48 +16,58 @@ public class PigeonSaleDocument(PigeonSales pigeonSales) : BaseDocument(pigeonSa
 
     protected override void ComposeContent(IContainer container)
     {
-        container.Table(table =>
+        container.Row(row =>
         {
-            table.ColumnsDefinition(columns =>
+            row.RelativeItem().Column(column =>
             {
-                columns.RelativeColumn(0.5f);
-                columns.RelativeColumn(3);
-                columns.RelativeColumn(3);
-                columns.RelativeColumn(3);
-                foreach (SimpleRace simpleRace in _pigeonSales.Races)
+                foreach (PigeonSaleClass pigeonSaleClass in _pigeonSales.PigeonSaleClasses)
                 {
-                    columns.RelativeColumn(1);
-                }
-                columns.RelativeColumn(1);
-            });
+                    column.Item().PaddingVertical(8).PreventPageBreak().Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(0.5f);
+                            columns.RelativeColumn(3);
+                            columns.RelativeColumn(3);
+                            columns.RelativeColumn(3);
+                            foreach (SimpleRace simpleRace in _pigeonSales.Races)
+                            {
+                                columns.RelativeColumn(1);
+                            }
+                            columns.RelativeColumn(1);
+                        });
 
-            table.Header(header =>
-            {
-                header.Cell().Text(string.Empty);
-                header.Cell().Text("Schenker");
-                header.Cell().Text("Koper");
-                header.Cell().Text("Duif");
-                foreach (SimpleRace simpleRace in _pigeonSales.Races)
-                {
-                    header.Cell().Text(simpleRace.Name).LineHeight(1.5f);
-                }
-                header.Cell().Text("Totaal");
-            });
+                        table.Header(header =>
+                        {
+                            header.Cell().ColumnSpan(5 + Convert.ToUInt32(_pigeonSales.Races.Count)).Text(pigeonSaleClass.Name).Underline().FontSize(16f).LineHeight(2f);
+                            header.Cell().Text(string.Empty).LineHeight(1.5f);
+                            header.Cell().Text("Schenker").LineHeight(1.5f);
+                            header.Cell().Text("Koper").LineHeight(1.5f);
+                            header.Cell().Text("Duif").LineHeight(1.5f);
+                            foreach (SimpleRace simpleRace in _pigeonSales.Races)
+                            {
+                                header.Cell().Text(simpleRace.Name).LineHeight(1.5f).ClampLines(1, ".");
+                            }
+                            header.Cell().Text("Totaal").LineHeight(1.5f);
+                        });
 
-            int position = 0;
-            foreach (PigeonSale pigeonSale in _pigeonSales.AllPigeonSales.OrderByDescending(to => to.TotalPoints))
-            {
-                position++;
-                table.Cell().Text($"{position}.").LineHeight(1.5f);
-                table.Cell().Text(pigeonSale.Seller?.Name).LineHeight(1.5f);
-                table.Cell().Text(pigeonSale.Buyer?.Name).LineHeight(1.5f);
-                table.Cell().Text(pigeonSale.Pigeon?.Id.ToString()).LineHeight(1.5f);
-                foreach (SimpleRace simpleRace in _pigeonSales.Races)
-                {
-                    table.Cell().Text((pigeonSale.RacePoints.FirstOrDefault(rp => rp.RaceCode == simpleRace.Code)?.Points ?? 0d).ToString("N0")).LineHeight(1.5f);
+                        int position = 0;
+                        foreach (PigeonSale pigeonSale in pigeonSaleClass.PigeonSales.OrderByDescending(to => to.TotalPoints))
+                        {
+                            position++;
+                            table.Cell().Text($"{position}.").LineHeight(1.5f);
+                            table.Cell().Text(pigeonSale.Seller?.Name).LineHeight(1.5f);
+                            table.Cell().Text(pigeonSale.Buyer?.Name).LineHeight(1.5f);
+                            table.Cell().Text(pigeonSale.Pigeon?.Id.ToString()).LineHeight(1.5f);
+                            foreach (SimpleRace simpleRace in _pigeonSales.Races)
+                            {
+                                table.Cell().Text((pigeonSale.RacePoints.FirstOrDefault(rp => rp.RaceCode == simpleRace.Code)?.Points ?? 0d).ToString("N0")).LineHeight(1.5f);
+                            }
+                            table.Cell().Text(pigeonSale.TotalPoints.ToString("N0")).LineHeight(1.5f);
+                        }
+                    });
                 }
-                table.Cell().Text(pigeonSale.TotalPoints.ToString("N0")).LineHeight(1.5f);
-            }
+            });
         });
     }
 }

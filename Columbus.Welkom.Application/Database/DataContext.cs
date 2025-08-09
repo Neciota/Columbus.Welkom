@@ -30,6 +30,7 @@ public class DataContext : DbContext
     public DbSet<TeamEntity> Teams { get; set; }
     public DbSet<PigeonSwapEntity> PigeonSwaps { get; set; }
     public DbSet<PigeonSaleEntity> PigeonSales { get; set; }
+    public DbSet<PigeonSaleClassEntity> PigeonSaleClasses { get; set; }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {

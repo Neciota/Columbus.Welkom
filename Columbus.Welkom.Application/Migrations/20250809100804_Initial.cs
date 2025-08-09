@@ -40,6 +40,19 @@ namespace Columbus.Welkom.Application.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "pigeon_sale_class",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    name = table.Column<string>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_pigeon_sale_class", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "race",
                 columns: table => new
                 {
@@ -176,6 +189,7 @@ namespace Columbus.Welkom.Application.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     seller_id = table.Column<int>(type: "INTEGER", nullable: false),
                     buyer_id = table.Column<int>(type: "INTEGER", nullable: false),
+                    ClassId = table.Column<int>(type: "INTEGER", nullable: false),
                     country_code = table.Column<string>(type: "TEXT", nullable: false),
                     year = table.Column<int>(type: "INTEGER", nullable: false),
                     ring_number = table.Column<int>(type: "INTEGER", nullable: false)
@@ -200,6 +214,12 @@ namespace Columbus.Welkom.Application.Migrations
                         columns: x => new { x.country_code, x.year, x.ring_number },
                         principalTable: "pigeon",
                         principalColumns: new[] { "country_code", "year", "ring_number" },
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_pigeon_sale_pigeon_sale_class_ClassId",
+                        column: x => x.ClassId,
+                        principalTable: "pigeon_sale_class",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -345,6 +365,11 @@ namespace Columbus.Welkom.Application.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_pigeon_sale_ClassId",
+                table: "pigeon_sale",
+                column: "ClassId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_pigeon_sale_country_code_year_ring_number",
                 table: "pigeon_sale",
                 columns: new[] { "country_code", "year", "ring_number" },
@@ -443,6 +468,9 @@ namespace Columbus.Welkom.Application.Migrations
 
             migrationBuilder.DropTable(
                 name: "race");
+
+            migrationBuilder.DropTable(
+                name: "pigeon_sale_class");
 
             migrationBuilder.DropTable(
                 name: "pigeon");

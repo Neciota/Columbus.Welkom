@@ -22,8 +22,10 @@ public class PigeonSaleEntity : IEntity
     }
     public OwnerId SellerId { get; set; }
     public OwnerId BuyerId { get; set; }
+    public int ClassId { get; set; }
 
     public OwnerEntity? Seller { get; set; }
     public OwnerEntity? Buyer { get; set; }
     public PigeonEntity? Pigeon { get; set; }
+    public PigeonSaleClassEntity? Class { get; set; }
 }

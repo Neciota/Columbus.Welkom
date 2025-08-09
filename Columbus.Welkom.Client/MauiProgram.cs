@@ -61,6 +61,7 @@ namespace Columbus.Welkom.Client
             builder.Services.AddTransient<IPigeonRepository, PigeonRepository>();
             builder.Services.AddTransient<IPigeonSwapRepository, PigeonSwapRepository>();
             builder.Services.AddTransient<IPigeonSaleRepository, PigeonSaleRepository>();
+            builder.Services.AddTransient<IPigeonSaleClassRepository, PigeonSaleClassRepository>();
             builder.Services.AddTransient<IRaceRepository, RaceRepository>();
             builder.Services.AddTransient<ISelectedYearPigeonRepository, SelectedYearPigeonRepository>();
             builder.Services.AddTransient<ISelectedYoungPigeonRepository, SelectedYoungPigeonRepository>();
