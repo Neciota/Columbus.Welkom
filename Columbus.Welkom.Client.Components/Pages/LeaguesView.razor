@@ -112,19 +112,7 @@
                             </RadzenDataGridColumn>
                         </Columns>
                         <Template Context="leagueOwner">
-                            <RadzenCard Variant="Variant.Outlined">
-                                <RadzenRow AlignItems="AlignItems.Center">
-                                    @foreach (RacePoints racePoints in leagueOwner.RacePoints)
-                                    {
-                                        <RadzenColumn Size="3" SizeLG="2">
-                                            @racePoints.RaceCode:
-                                        </RadzenColumn>
-                                        <RadzenColumn Size="3" SizeLG="2">
-                                            @racePoints.Points
-                                        </RadzenColumn>
-                                    }
-                                </RadzenRow>
-                            </RadzenCard>
+                            <RacePointsOverview RacePoints="leagueOwner.RacePoints" />
                         </Template>
                     </RadzenDataGrid>
                 </RadzenCard>

@@ -63,20 +63,26 @@ public class PigeonSaleService(
             Buyer = ps.Buyer?.ToOwner(),
             Pigeon = ps.Pigeon?.ToPigeon(),
             RacePoints = racePointsByPigeon.GetValueOrDefault(ps.PigeonId)?.ToList() ?? []
-        }).ToList();
+        })
+            .OrderByDescending(ps => ps.TotalPoints)
+            .ToList();
     }
 
     private IEnumerable<(PigeonId PigeonId, RacePoints RacePoints)> GetRacePointsFromRace(HashSet<PigeonId> pigeonsIdsInCompetition, Race race)
     {
         const int maxPoints = 200;
         const int minPoints = 30;
-        double pointStep = Convert.ToDouble(maxPoints - minPoints) / (pigeonsIdsInCompetition.Count - 1);
+
+        int finishingPigeonsCount = race.PigeonRaces.Where(pr => pigeonsIdsInCompetition.Contains(pr.Pigeon.Id))
+            .Where(pr => pr.ArrivalTime.HasValue && pr.ArrivalTime.Value.Hour < 18)
+            .Count();
+        double pointStep = Convert.ToDouble(maxPoints - minPoints) / Math.Max(finishingPigeonsCount - 1, 1);
 
         return race.PigeonRaces.Where(pr => pigeonsIdsInCompetition.Contains(pr.Pigeon.Id))
             .Select((pr, i) => (pr.Pigeon.Id, new RacePoints
             {
                 RaceCode = race.Code,
-                Points = pr.ArrivalTime is null ? 0d : maxPoints - i * pointStep,
+                Points = !pr.ArrivalTime.HasValue || pr.ArrivalTime.Value.Hour > 18 ? 0d : maxPoints - i * pointStep,
             }));
     }
 
