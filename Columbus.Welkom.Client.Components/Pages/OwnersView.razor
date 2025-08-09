@@ -55,7 +55,7 @@
         try
         {
             _owners = await OwnerService.ReadOwnersFromFileAsync();
-            await OwnerService.OverwriteOwnersAsync(_owners);
+            await OwnerService.UpdateOwnersAsync(_owners);
         }
         catch (JSException)
         {
