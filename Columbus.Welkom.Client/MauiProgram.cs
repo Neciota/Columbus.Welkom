@@ -7,6 +7,8 @@ using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services;
 using Columbus.Welkom.Application.Services.Interfaces;
 using CommunityToolkit.Maui.Core;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Debug;
 using Microsoft.Extensions.Options;
@@ -90,6 +92,13 @@ namespace Columbus.Welkom.Client
             {
                 var appSettings = scope.ServiceProvider.GetRequiredService<IOptions<AppSettings>>();
                 appSettings.Value.AppDirectory = appFolder;
+            }
+
+            using (var scope = app.Services.CreateScope())
+            {
+                IDbContextFactory<DataContext> dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<DataContext>>();
+                DataContext context = dbContextFactory.CreateDbContext();
+                context.Database.Migrate();
             }
 
             return app;

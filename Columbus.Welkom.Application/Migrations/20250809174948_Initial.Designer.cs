@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Columbus.Welkom.Application.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250809100804_Initial")]
+    [Migration("20250809174948_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -289,13 +289,11 @@ namespace Columbus.Welkom.Application.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BuyerId")
-                        .IsUnique();
+                    b.HasIndex("BuyerId");
 
                     b.HasIndex("ClassId");
 
-                    b.HasIndex("SellerId")
-                        .IsUnique();
+                    b.HasIndex("SellerId");
 
                     b.HasIndex("_countryCode", "_year", "_ringNumber")
                         .IsUnique();
@@ -604,8 +602,8 @@ namespace Columbus.Welkom.Application.Migrations
             modelBuilder.Entity("Columbus.Welkom.Application.Models.Entities.PigeonSaleEntity", b =>
                 {
                     b.HasOne("Columbus.Welkom.Application.Models.Entities.OwnerEntity", "Buyer")
-                        .WithOne("PigeonBuy")
-                        .HasForeignKey("Columbus.Welkom.Application.Models.Entities.PigeonSaleEntity", "BuyerId")
+                        .WithMany("PigeonBuy")
+                        .HasForeignKey("BuyerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -616,8 +614,8 @@ namespace Columbus.Welkom.Application.Migrations
                         .IsRequired();
 
                     b.HasOne("Columbus.Welkom.Application.Models.Entities.OwnerEntity", "Seller")
-                        .WithOne("PigeonSale")
-                        .HasForeignKey("Columbus.Welkom.Application.Models.Entities.PigeonSaleEntity", "SellerId")
+                        .WithMany("PigeonSale")
+                        .HasForeignKey("SellerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

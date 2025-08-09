@@ -21,6 +21,10 @@
                       Disabled="_isLoading" />
     </RadzenStack>
 
+    <RadzenText TextStyle="TextStyle.Body1" Visible="!_pigeonSaleClasses.Any() && !_isLoading">
+        Er zijn geen verkoopklassementen aanwezig.
+    </RadzenText>
+
     @foreach (PigeonSaleClass pigeonSaleClass in _pigeonSaleClasses)
     {
         <RadzenDataGrid Data="pigeonSaleClass.PigeonSales" @ref="_dataGridsByPigeonSaleClassId[pigeonSaleClass.Id]" IsLoading="_isLoading" EmptyText="Geen duivenverkopen gevonden.">
@@ -134,6 +138,10 @@
         </RadzenDataGrid>
     }
 </RadzenStack>
+
+<RadzenRow AlignItems="AlignItems.Normal" JustifyContent="JustifyContent.Center" Visible="_isLoading">
+    <RadzenProgressBarCircular Mode="ProgressBarMode.Indeterminate" ShowValue="false" Size="ProgressBarCircularSize.Large" />
+</RadzenRow>
 
 @code {
     [CascadingParameter(Name = "Club")]

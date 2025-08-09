@@ -22,11 +22,11 @@ public class TeamsDocument(Teams teams) : BaseDocument(teams)
 
             table.ColumnsDefinition(columns =>
             {
+                columns.RelativeColumn(0.5f);
                 columns.RelativeColumn(1);
-                columns.RelativeColumn(1);
-                for (int positionInTeam = 0; positionInTeam < highestPosition; positionInTeam++)
+                for (int positionInTeam = 0; positionInTeam <= highestPosition; positionInTeam++)
                 {
-                    columns.RelativeColumn(4);
+                    columns.RelativeColumn(3);
                     columns.RelativeColumn(1);
                 }
                 
@@ -38,7 +38,7 @@ public class TeamsDocument(Teams teams) : BaseDocument(teams)
                 position++;
                 table.Cell().Text($"{position}.").LineHeight(1.5f);
                 table.Cell().Text(team.TotalPoints.ToString()).LineHeight(1.5f);
-                for (int positionInTeam = 0; positionInTeam < highestPosition; positionInTeam++)
+                for (int positionInTeam = 0; positionInTeam <= highestPosition; positionInTeam++)
                 {
                     TeamOwner? teamOwner = team.TeamOwners.FirstOrDefault(to => to.Position == positionInTeam);
 

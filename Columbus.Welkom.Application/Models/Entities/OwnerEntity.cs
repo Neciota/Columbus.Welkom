@@ -25,8 +25,8 @@ namespace Columbus.Welkom.Application.Models.Entities
         public OwnerTeamEntity? OwnerTeam { get; set; }
         public SelectedYearPigeonEntity? SelectedYearPigeon { get; set; }
         public SelectedYoungPigeonEntity? SelectedYoungPigeon { get; set; }
-        public PigeonSaleEntity? PigeonSale { get; set; }
-        public PigeonSaleEntity? PigeonBuy { get; set; }
+        public ICollection<PigeonSaleEntity> PigeonSale { get; set; } = [];
+        public ICollection<PigeonSaleEntity> PigeonBuy { get; set; } = [];
         public ICollection<PigeonSwapEntity> PlayedSwappedPigeons { get; set; } = [];
         public ICollection<PigeonSwapEntity> OwnedSwappedPigeons { get; set; } = [];
         public ICollection<PigeonSwapEntity> CoupledSwappedPigeons { get; set; } = [];

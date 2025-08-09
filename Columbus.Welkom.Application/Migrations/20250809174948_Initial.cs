@@ -361,8 +361,7 @@ namespace Columbus.Welkom.Application.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_pigeon_sale_buyer_id",
                 table: "pigeon_sale",
-                column: "buyer_id",
-                unique: true);
+                column: "buyer_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_pigeon_sale_ClassId",
@@ -378,8 +377,7 @@ namespace Columbus.Welkom.Application.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_pigeon_sale_seller_id",
                 table: "pigeon_sale",
-                column: "seller_id",
-                unique: true);
+                column: "seller_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_pigeon_swap_country_code_year_ring_number",

@@ -50,13 +50,13 @@ public class OwnerEntityConfiguration : IEntityTypeConfiguration<OwnerEntity>
             .WithOne(e => e.Owner)
             .HasForeignKey<SelectedYoungPigeonEntity>(e => e.OwnerId);
 
-        builder.HasOne(e => e.PigeonSale)
+        builder.HasMany(e => e.PigeonSale)
             .WithOne(e => e.Seller)
-            .HasForeignKey<PigeonSaleEntity>(e => e.SellerId);
+            .HasForeignKey(e => e.SellerId);
 
-        builder.HasOne(e => e.PigeonBuy)
+        builder.HasMany(e => e.PigeonBuy)
             .WithOne(e => e.Buyer)
-            .HasForeignKey<PigeonSaleEntity>(e => e.BuyerId);
+            .HasForeignKey(e => e.BuyerId);
 
         builder.HasMany(e => e.PlayedSwappedPigeons)
             .WithOne(e => e.Player)
