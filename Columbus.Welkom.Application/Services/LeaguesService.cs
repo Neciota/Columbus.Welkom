@@ -65,7 +65,7 @@ namespace Columbus.Welkom.Application.Services
                         PigeonRace? topMarkedPigeonRace = prg.Where(pr => pr.Mark is 1 or 2).MaxBy(pr => pr.Points);
                         PigeonRace? topOtherPigeonRace = (topMarkedPigeonRace is null ? prg : prg.Except([topMarkedPigeonRace])).MaxBy(pr => pr.Points);
 
-                        double points = (topMarkedPigeonRace?.Points + topOtherPigeonRace?.Points) ?? 0;
+                        double points = (topMarkedPigeonRace?.Points ?? 0) + (topOtherPigeonRace?.Points ?? 0);
                         return (prg.Key, new RacePoints { RaceCode = r.Code, Points = points } );
                     });
             })
