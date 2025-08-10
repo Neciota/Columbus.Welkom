@@ -70,7 +70,7 @@ public class PigeonSaleService(
     public async Task<ICollection<PigeonSaleClass>> GetAllClassesAsync()
     {
         ICollection<PigeonSaleClassEntity> pigeonSaleClasses = await _pigeonSaleClassRepository.GetAllWithPigeonSalesAsync();
-        HashSet<PigeonId> pigeonsIdsInCompetition = pigeonSaleClasses.SelectMany(psc => psc.PigeonSales).Select(ps => ps.PigeonId).ToHashSet();
+        Dictionary<int, HashSet<PigeonId>> pigeonsIdsInCompetitionByClass = pigeonSaleClasses.ToDictionary(psc => psc.Id, psc => psc.PigeonSales.Select(ps => ps.PigeonId).ToHashSet());
 
         RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
         Dictionary<RaceType, RacePointsSettings> racePointsSettingsByRaceType = raceSettings.RacePointsSettings.ToDictionary(rps => rps.RaceType);
@@ -84,7 +84,7 @@ public class PigeonSaleService(
             racePointsSettingsByRaceType[re.Type].DecimalCount,
             neutralizationTimesByRaceType[re.Type]));
 
-        Dictionary<PigeonId, IEnumerable<RacePoints>> racePointsByPigeon = races.SelectMany(r => GetRacePointsFromRace(pigeonsIdsInCompetition, r))
+        Dictionary<PigeonId, IEnumerable<RacePoints>> racePointsByPigeon = pigeonSaleClasses.SelectMany(psc => races.SelectMany(r => GetRacePointsFromRace(pigeonsIdsInCompetitionByClass[psc.Id], r)))
             .GroupBy(prp => prp.PigeonId)
             .ToDictionary(prpg => prpg.Key, prpg => prpg.Select(prp => prp.RacePoints));
 
