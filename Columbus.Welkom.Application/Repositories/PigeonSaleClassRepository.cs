@@ -9,7 +9,7 @@ public class PigeonSaleClassRepository(IDbContextFactory<DataContext> contextFac
 {
     public async Task<ICollection<PigeonSaleClassEntity>> GetAllWithPigeonSalesAsync()
     {
-        DataContext context = _contextFactory.CreateDbContext();
+        using DataContext context = _contextFactory.CreateDbContext();
 
         return await context.PigeonSaleClasses
             .Include(psc => psc.PigeonSales)
@@ -23,7 +23,7 @@ public class PigeonSaleClassRepository(IDbContextFactory<DataContext> contextFac
 
     public async Task<PigeonSaleClassEntity?> GetByIdAsync(int id)
     {
-        DataContext context = _contextFactory.CreateDbContext();
+        using DataContext context = _contextFactory.CreateDbContext();
 
         return await context.PigeonSaleClasses.FirstOrDefaultAsync(psc => psc.Id == id);
     }

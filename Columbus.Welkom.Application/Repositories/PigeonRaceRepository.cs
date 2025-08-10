@@ -9,7 +9,7 @@ namespace Columbus.Welkom.Application.Repositories
     {
         public async Task DeleteAllByRaceCodeAsync(string raceCode)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             await context.PigeonRaces.Where(pr => pr.RaceCode == raceCode)
                 .ExecuteDeleteAsync();

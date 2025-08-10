@@ -10,7 +10,7 @@ namespace Columbus.Welkom.Application.Repositories
     {
         public async Task<IEnumerable<OwnerEntity>> GetAllByOwnerIdsAsync(IEnumerable<OwnerId> ownerIds)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             return await context.Owners.Where(o => ownerIds.Contains(o.OwnerId))
                 .ToListAsync();
@@ -18,7 +18,7 @@ namespace Columbus.Welkom.Application.Repositories
 
         public async Task<IEnumerable<OwnerEntity>> GetAllWithAllPigeonsAsync()
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             return await context.Owners.Include(o => o.Pigeons)
                 .ToListAsync();
@@ -26,7 +26,7 @@ namespace Columbus.Welkom.Application.Repositories
 
         public async Task<IEnumerable<OwnerEntity>> GetAllWithPigeonsForYearAsync(int year, bool includeOwnersWithoutPigeons)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             var query = context.Owners.AsQueryable();
 
@@ -39,7 +39,7 @@ namespace Columbus.Welkom.Application.Repositories
 
         public async Task<IEnumerable<OwnerEntity>> GetByOwnerIdsAsync(IEnumerable<OwnerId> ownerIds)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             return await context.Owners.Where(o => ownerIds.Contains(o.OwnerId))
                 .ToListAsync();

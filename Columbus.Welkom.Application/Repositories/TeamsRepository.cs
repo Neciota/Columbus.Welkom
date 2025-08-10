@@ -9,7 +9,7 @@ public class TeamsRepository(IDbContextFactory<DataContext> contextFactory) : Ba
 {
     public async Task<ICollection<TeamEntity>> GetAllWithTeamOwnersAync()
     {
-        DataContext context = _contextFactory.CreateDbContext();
+        using DataContext context = _contextFactory.CreateDbContext();
 
         return await context.Teams.Include(t => t.TeamOwners)
             .ThenInclude(to => to.Owner)
@@ -18,7 +18,7 @@ public class TeamsRepository(IDbContextFactory<DataContext> contextFactory) : Ba
 
     public async Task<TeamEntity?> GetByNumberAsync(int number)
     {
-        DataContext context = _contextFactory.CreateDbContext();
+        using DataContext context = _contextFactory.CreateDbContext();
 
         return await context.Teams.Include(t => t.TeamOwners)
             .ThenInclude(to => to.Owner)

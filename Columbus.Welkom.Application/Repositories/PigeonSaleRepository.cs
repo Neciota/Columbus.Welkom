@@ -9,7 +9,7 @@ public class PigeonSaleRepository(IDbContextFactory<DataContext> contextFactory)
 {
     public async Task<ICollection<PigeonSaleEntity>> GetAllWithOwnersAndPigeonsAsync()
     {
-        DataContext context = _contextFactory.CreateDbContext();
+        using DataContext context = _contextFactory.CreateDbContext();
 
         return await context.PigeonSales
             .Include(ps => ps.Seller)
@@ -20,7 +20,7 @@ public class PigeonSaleRepository(IDbContextFactory<DataContext> contextFactory)
 
     public async Task<PigeonSaleEntity?> GetByIdAsync(int id)
     {
-        DataContext context = _contextFactory.CreateDbContext();
+        using DataContext context = _contextFactory.CreateDbContext();
 
         return await context.PigeonSales.SingleOrDefaultAsync(ps => ps.Id == id);
     }

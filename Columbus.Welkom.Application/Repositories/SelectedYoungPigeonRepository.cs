@@ -11,7 +11,7 @@ namespace Columbus.Welkom.Application.Repositories
     {
         public async Task<int> DeleteByOwnerAsync(OwnerId ownerId)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             return await context.SelectedYoungPigeons.Where(syp => syp.OwnerId == ownerId)
                 .ExecuteDeleteAsync();
@@ -19,7 +19,7 @@ namespace Columbus.Welkom.Application.Repositories
 
         public override async Task<IEnumerable<SelectedYoungPigeonEntity>> GetAllAsync()
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             return await context.SelectedYoungPigeons.Include(syp => syp.Owner)
                 .Include(syp => syp.Pigeon)
@@ -28,7 +28,7 @@ namespace Columbus.Welkom.Application.Repositories
 
         public async Task<SelectedYoungPigeonEntity?> GetByOwnerAsync(OwnerId ownerId)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             return await context.SelectedYoungPigeons.Where(syp => syp.OwnerId == ownerId)
                 .FirstOrDefaultAsync();
@@ -36,7 +36,7 @@ namespace Columbus.Welkom.Application.Repositories
 
         public async Task<SelectedYoungPigeonEntity?> GetByPigeonIdAsync(PigeonId pigeonId)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             return await context.SelectedYoungPigeons.Where(syp => syp.Pigeon!.Id == pigeonId)
                 .Include(syp => syp.Pigeon)

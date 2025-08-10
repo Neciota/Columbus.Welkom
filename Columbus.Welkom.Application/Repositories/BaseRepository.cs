@@ -16,14 +16,14 @@ namespace Columbus.Welkom.Application.Repositories
 
         public virtual async Task<IEnumerable<T>> GetAllAsync()
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             return await context.Set<T>().ToListAsync();
         }
 
         public virtual async Task<T> AddAsync(T entity)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             context.Add(entity);
             await context.SaveChangesAsync();
@@ -33,7 +33,7 @@ namespace Columbus.Welkom.Application.Repositories
 
         public virtual async Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             context.AddRange(entities);
             await context.SaveChangesAsync();
@@ -43,7 +43,7 @@ namespace Columbus.Welkom.Application.Repositories
 
         public virtual async Task<T> UpdateAsync(T entity)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             context.Update(entity);
             await context.SaveChangesAsync();
@@ -53,7 +53,7 @@ namespace Columbus.Welkom.Application.Repositories
 
         public virtual async Task<IEnumerable<T>> UpdateRangeAsync(IEnumerable<T> entities)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             context.UpdateRange(entities);
             await context.SaveChangesAsync();
@@ -63,7 +63,7 @@ namespace Columbus.Welkom.Application.Repositories
 
         public virtual async Task<bool> DeleteAsync(T entity)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             context.Remove(entity);
             int count = await context.SaveChangesAsync();
@@ -73,7 +73,7 @@ namespace Columbus.Welkom.Application.Repositories
 
         public virtual async Task<bool> DeleteRangeAsync(IEnumerable<T> entities)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             context.RemoveRange(entities);
             int count = await context.SaveChangesAsync();

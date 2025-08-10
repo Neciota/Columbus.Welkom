@@ -9,7 +9,7 @@ public class LeagueRepository(IDbContextFactory<DataContext> contextFactory) : B
 {
     public async Task<ICollection<LeagueEntity>> GetAllWithOwnersAsync()
     {
-        DataContext context = _contextFactory.CreateDbContext();
+        using DataContext context = _contextFactory.CreateDbContext();
 
         return await context.Leagues.Include(l => l.LeagueOwners)
             .ThenInclude(lo => lo.Owner)
@@ -18,7 +18,7 @@ public class LeagueRepository(IDbContextFactory<DataContext> contextFactory) : B
 
     public async Task<LeagueEntity?> GetByRankAsync(int rank)
     {
-        DataContext context = _contextFactory.CreateDbContext();
+        using DataContext context = _contextFactory.CreateDbContext();
 
         return await context.Leagues.Include(l => l.LeagueOwners)
             .ThenInclude(lo => lo.Owner)

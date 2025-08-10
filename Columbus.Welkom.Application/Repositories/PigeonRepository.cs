@@ -10,7 +10,7 @@ namespace Columbus.Welkom.Application.Repositories
     {
         public async Task<PigeonEntity?> GetByPigeonIdAsync(PigeonId pigeonId)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             return await context.Pigeons.Where(p => p.Id.CountryCode == pigeonId.CountryCode)
                 .Where(p => p.Id.Year == pigeonId.Year)
@@ -20,7 +20,7 @@ namespace Columbus.Welkom.Application.Repositories
 
         public async Task<IEnumerable<PigeonEntity>> GetByPigeonIdsAsync(IEnumerable<PigeonId> pigeonIds)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             HashSet<PigeonId> uniqueIds = pigeonIds.ToHashSet();
 

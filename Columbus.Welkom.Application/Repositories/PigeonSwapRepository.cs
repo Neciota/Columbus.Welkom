@@ -11,7 +11,7 @@ namespace Columbus.Welkom.Application.Repositories
     {
         public async Task<IEnumerable<PigeonSwapEntity>> GetAllWithOwnersAndPigeonAsync()
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             return await context.PigeonSwaps.Include(ps => ps.Player)
                 .Include(ps => ps.Owner)
@@ -22,7 +22,7 @@ namespace Columbus.Welkom.Application.Repositories
 
         public async Task<int> DeleteByPlayerAndPigeonAsync(OwnerId playerId, PigeonId pigeonId)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             return await context.PigeonSwaps.Where(ps => ps.PlayerId == playerId)
                 .Where(ps => ps.Pigeon!.Id == pigeonId)
@@ -31,7 +31,7 @@ namespace Columbus.Welkom.Application.Repositories
 
         public async Task<PigeonSwapEntity?> GetByIdAsync(int id)
         {
-            DataContext context = _contextFactory.CreateDbContext();
+            using DataContext context = _contextFactory.CreateDbContext();
 
             return await context.PigeonSwaps.SingleOrDefaultAsync(ps => ps.Id == id);
         }
