@@ -1,4 +1,4 @@
-﻿using Columbus.Models.Owner;
+using Columbus.Models.Owner;
 using Columbus.Models.Race;
 using Columbus.Welkom.Application.Export;
 using Columbus.Welkom.Application.Models.Entities;
@@ -6,6 +6,7 @@ using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Providers;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
+using Columbus.Welkom.Application.Venira;
 using Microsoft.Extensions.Options;
 using QuestPDF.Fluent;
 
@@ -19,13 +20,15 @@ namespace Columbus.Welkom.Application.Services
         private readonly SettingsProvider _settingsProvider;
         private readonly IOptions<AppSettings> _appSettings;
         private readonly IFilePicker _filePicker;
+        private readonly ISolarPeriodProvider _solarPeriodProvider;
 
         public LeaguesService(ILeagueRepository leagueRepository,
             ILeagueOwnerRepository leagueOwnerRepository,
-            IRaceRepository raceRepository, 
-            SettingsProvider settingsProvider, 
-            IOptions<AppSettings> appSettings, 
-            IFilePicker filePicker)
+            IRaceRepository raceRepository,
+            SettingsProvider settingsProvider,
+            IOptions<AppSettings> appSettings,
+            IFilePicker filePicker,
+            ISolarPeriodProvider solarPeriodProvider)
         {
             _leagueRepository = leagueRepository;
             _leagueOwnerRepository = leagueOwnerRepository;
@@ -33,6 +36,7 @@ namespace Columbus.Welkom.Application.Services
             _settingsProvider = settingsProvider;
             _appSettings = appSettings;
             _filePicker = filePicker;
+            _solarPeriodProvider = solarPeriodProvider;
         }
 
         public async Task AddLeagueAsync(League league)
@@ -53,7 +57,7 @@ namespace Columbus.Welkom.Application.Services
 
             RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
             Dictionary<RaceType, RacePointsSettings> racePointsSettingsByRaceType = raceSettings.RacePointsSettings.ToDictionary(rps => rps.RaceType);
-            Dictionary<RaceType, INeutralizationTime> neutralizationTimesByRaceType = raceSettings.GetNeutralizationTimesByRaceType(_appSettings.Value.Year);
+            Dictionary<RaceType, INeutralizationTime> neutralizationTimesByRaceType = raceSettings.GetNeutralizationTimesByRaceType(await _solarPeriodProvider.GetSolarPeriodsAsync(_appSettings.Value.Year));
 
             IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync(raceSettings.AppliedRaceTypes.LeagueRaceTypes.ToArray());
             IEnumerable<Race> races = raceEntities.Select(re => re.ToRace(

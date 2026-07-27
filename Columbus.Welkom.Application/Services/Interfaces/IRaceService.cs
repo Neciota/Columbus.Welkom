@@ -10,8 +10,17 @@ namespace Columbus.Welkom.Application.Services.Interfaces
         Task<IEnumerable<SimpleRace>> GetAllRacesAsync();
         Task<Race> GetRaceByCodeAsync(string code);
         Task OverwriteRacesAsync(IEnumerable<Race> races);
-        Task<Race?> ReadRaceAsync();
-        Task<IEnumerable<Race>> ReadRacesAsync();
+
+        /// <summary>
+        /// Reads every calculated flight of the configured year from the Venira database.
+        /// </summary>
+        Task<IEnumerable<Race>> ReadRacesFromVeniraAsync();
+
+        /// <summary>
+        /// Stores the races that are not in the database yet, leaving existing ones alone.
+        /// </summary>
+        Task SyncRacesAsync(IEnumerable<Race> races);
+
         Task StoreRaceAsync(Race race);
     }
 }

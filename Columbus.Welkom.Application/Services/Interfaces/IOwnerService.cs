@@ -7,6 +7,10 @@ namespace Columbus.Welkom.Application.Services.Interfaces
         Task<IEnumerable<Owner>> GetOwnersWithAllPigeonsAsync();
         Task<IEnumerable<Owner>> GetOwnersWithYearPigeonsAsync(int year, bool includeOwnersWithoutPigeons = false);
         Task UpdateOwnersAsync(IEnumerable<Owner> owners);
-        Task<IEnumerable<Owner>> ReadOwnersFromFileAsync();
+
+        /// <summary>
+        /// Reads the configured club's members, with their lofts, from the Venira database.
+        /// </summary>
+        Task<IEnumerable<Owner>> ReadOwnersFromVeniraAsync();
     }
 }

@@ -16,7 +16,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '9.0.x'
 
       - name: Install MAUI workload
         run: |
@@ -26,7 +26,7 @@ jobs:
       - name: Publish MAUI Windows app (Unpackaged)
         run: >
           dotnet publish Columbus.Welkom.Client\Columbus.Welkom.Client.csproj
-          -f net8.0-windows10.0.19041.0
+          -f net9.0-windows10.0.19041.0
           -c Release
           -p:RuntimeIdentifierOverride=win10-x64
           -p:WindowsPackageType=None

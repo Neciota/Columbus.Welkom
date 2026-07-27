@@ -3,6 +3,7 @@
 @using Columbus.Welkom.Application.Models.ViewModels
 @using Columbus.Welkom.Application.Providers
 @using Columbus.Welkom.Application.Services.Interfaces
+@using Columbus.Welkom.Application.Venira
 @inject IRaceService RaceService
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
@@ -13,17 +14,19 @@
     </RadzenText>
 
     <RadzenStack Orientation="Orientation.Horizontal">
-        <RadzenButton Text="W-Bestanden"
+        <RadzenButton Text="Vluchten inlezen"
                       ButtonStyle="ButtonStyle.Primary"
                       ButtonType="ButtonType.Button"
-                      Icon="drive_folder_upload"
-                      Click="ReadDirectory" />
+                      IsBusy="_isLoading"
+                      Icon="sync"
+                      Click="SyncRaces" />
 
-        <RadzenButton Text="W-Bestand"
+        <RadzenButton Text="Alles opnieuw inlezen"
                       ButtonStyle="ButtonStyle.Secondary"
                       ButtonType="ButtonType.Button"
-                      Icon="upload_file"
-                      Click="ReadFile" />
+                      IsBusy="_isLoading"
+                      Icon="refresh"
+                      Click="ReimportRaces" />
     </RadzenStack>
 
 
@@ -76,41 +79,27 @@
         _races = await RaceService.GetAllRacesAsync();
     }
 
-    private async Task ReadDirectory()
+    /// <summary>Adds the Venira flights that are not in the database yet.</summary>
+    private Task SyncRaces() => ImportRaces(RaceService.SyncRacesAsync);
+
+    /// <summary>Discards the stored races and reads them all from Venira again.</summary>
+    private Task ReimportRaces() => ImportRaces(RaceService.OverwriteRacesAsync);
+
+    private async Task ImportRaces(Func<IEnumerable<Race>, Task> store)
     {
         _isLoading = true;
 
         try
         {
-            IEnumerable<Race> races = await RaceService.ReadRacesAsync();
-            await RaceService.OverwriteRacesAsync(races);
+            IEnumerable<Race> races = await RaceService.ReadRacesFromVeniraAsync();
+            await store(races);
             _races = await RaceService.GetAllRacesAsync();
-        } catch (JSException)
+        }
+        catch (VeniraException e)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Fout", "Bestand kon niet worden geladen.");
+            NotificationService.Notify(NotificationSeverity.Error, "Fout", e.Message, 10000);
         }
         finally
-        {
-            _isLoading = false;
-        }
-    }
-
-    private async Task ReadFile()
-    {
-        _isLoading = true;
-
-        try
-        {
-            Race? newRace = await RaceService.ReadRaceAsync();
-            if (newRace is null)
-                return;
-
-            await RaceService.StoreRaceAsync(newRace);
-            _races = await RaceService.GetAllRacesAsync();
-        } catch (JSException)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, "Fout", "Bestand kon niet worden geladen.");
-        } finally
         {
             _isLoading = false;
         }

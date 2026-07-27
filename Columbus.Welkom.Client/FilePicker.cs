@@ -1,14 +1,10 @@
 ﻿using CommunityToolkit.Maui.Storage;
-using System.Text;
-using System.Text.RegularExpressions;
 using IFilePicker = Columbus.Welkom.Application.Providers.IFilePicker;
 
 namespace Columbus.Welkom.Client;
 
 public class FilePicker : IFilePicker
 {
-    private const int FileBufferSize = 10_000_000;
-
     public async Task<string?> PickFileAsync(string[] fileTypes)
     {
         FileResult? fileResult = await GetFileAsync(fileTypes);
@@ -21,27 +17,6 @@ public class FilePicker : IFilePicker
         IEnumerable<FileResult> fileResults = await GetFilesAsync(fileTypes);
 
         return fileResults.Select(f => f.FullPath);
-    }
-
-    public async Task<(StreamReader?, string)> OpenFileAsync(string[] fileTypes)
-    {
-        FileResult? fileResult = await GetFileAsync(fileTypes);
-        if (fileResult is null)
-            return (null, string.Empty);
-
-        Stream stream = await fileResult.OpenReadAsync();
-        return (new StreamReader(stream, Encoding.Latin1, false, FileBufferSize), fileResult.FileName);
-    }
-
-    public async Task<IEnumerable<(StreamReader, string)>> OpenFilesAsync(string[] fileTypes, Regex? nameMustMatch = null)
-    {
-        IEnumerable<FileResult> fileResult = await GetFilesAsync(fileTypes);
-
-        if (nameMustMatch is not null)
-            fileResult = fileResult.Where(f => nameMustMatch.IsMatch(f.FileName));
-
-        return (await Task.WhenAll(fileResult.Select(async f => (await f.OpenReadAsync(), f.FileName))))
-            .Select(f => (new StreamReader(f.Item1, Encoding.Latin1, false, FileBufferSize), f.FileName));
     }
 
     private static async Task<FileResult?> GetFileAsync(string[] fileTypes)

@@ -66,6 +66,24 @@
     </RadzenColumn>
 
     <RadzenColumn Size="12" SizeMD="6">
+        <RadzenFieldset Text="Venira" AllowCollapse="true" Collapsed="false">
+            <RadzenStack Orientation="Orientation.Vertical">
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="4">
+                        Datamap
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="8">
+                        <RadzenTextBox @bind-Value="_settings.VeniraDataPath"
+                                       Change="SaveSettingsAsync"
+                                       class="rz-w-100" />
+                    </RadzenColumn>
+                </RadzenRow>
+                <RadzenText TextStyle="TextStyle.Caption">
+                    De map met Venira's databestanden (Vlucht.DB, Aankomst.DB, Liefhbr.DB, ...).
+                </RadzenText>
+            </RadzenStack>
+        </RadzenFieldset>
+
         <RadzenFieldset Text="Database" AllowCollapse="true" Collapsed="false">
             <RadzenStack Orientation="Orientation.Vertical">
                 <RadzenRow AlignItems="AlignItems.Center">

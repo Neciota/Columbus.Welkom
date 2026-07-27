@@ -1,4 +1,4 @@
-﻿using Columbus.Models.Owner;
+using Columbus.Models.Owner;
 using Columbus.Models.Race;
 using Columbus.Welkom.Application.Export;
 using Columbus.Welkom.Application.Models.DocumentModels;
@@ -7,6 +7,7 @@ using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Providers;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
+using Columbus.Welkom.Application.Venira;
 using Microsoft.Extensions.Options;
 using QuestPDF.Fluent;
 
@@ -17,13 +18,15 @@ public class TeamsService(
     IRaceRepository raceRepository,
     SettingsProvider settingsProvider,
     IOptions<AppSettings> appSettings,
-    IFilePicker filePicker) : ITeamsService
+    IFilePicker filePicker,
+    ISolarPeriodProvider solarPeriodProvider) : ITeamsService
 {
     private readonly ITeamsRepository _teamsRepository = teamsRepository;
     private readonly IRaceRepository _raceRepository = raceRepository;
     private readonly SettingsProvider _settingsProvider = settingsProvider;
     private readonly IOptions<AppSettings> _appSettings = appSettings;
     private readonly IFilePicker _filePicker = filePicker;
+    private readonly ISolarPeriodProvider _solarPeriodProvider = solarPeriodProvider;
 
     public async Task<IEnumerable<Team>> GetAllAsync()
     {
@@ -31,7 +34,7 @@ public class TeamsService(
 
         RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
         Dictionary<RaceType, RacePointsSettings> racePointsSettingsByRaceType = raceSettings.RacePointsSettings.ToDictionary(rps => rps.RaceType);
-        Dictionary<RaceType, INeutralizationTime> neutralizationTimesByRaceType = raceSettings.GetNeutralizationTimesByRaceType(_appSettings.Value.Year);
+        Dictionary<RaceType, INeutralizationTime> neutralizationTimesByRaceType = raceSettings.GetNeutralizationTimesByRaceType(await _solarPeriodProvider.GetSolarPeriodsAsync(_appSettings.Value.Year));
 
         IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync(raceSettings.AppliedRaceTypes.TeamRaceTypes.ToArray());
         IEnumerable<Race> races = raceEntities.Select(re => re.ToRace(

@@ -1,36 +1,36 @@
-﻿using Columbus.Models.Owner;
+﻿using Columbus.Models;
+using Columbus.Models.Owner;
 using Columbus.Models.Pigeon;
-using Columbus.UDP.Interfaces;
 using Columbus.Welkom.Application.Models.Entities;
-using Columbus.Welkom.Application.Providers;
+using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
+using Columbus.Welkom.Application.Venira;
+using Microsoft.Extensions.Options;
 
 namespace Columbus.Welkom.Application.Services
 {
     public class OwnerService : IOwnerService
     {
-        private readonly IFilePicker _filePicker;
         private readonly IOwnerRepository _ownerRepository;
         private readonly IPigeonRepository _pigeonRepository;
-        private readonly IOwnerSerializer _ownerSerializer;
+        private readonly IVeniraOwnerProvider _veniraOwnerProvider;
+        private readonly IOptions<AppSettings> _appSettings;
 
-        public OwnerService(IOwnerRepository ownerRepository, IPigeonRepository pigeonRepository, IFilePicker filePicker, IOwnerSerializer ownerSerializer)
+        public OwnerService(
+            IOwnerRepository ownerRepository,
+            IPigeonRepository pigeonRepository,
+            IVeniraOwnerProvider veniraOwnerProvider,
+            IOptions<AppSettings> appSettings)
         {
-            _filePicker = filePicker;
             _ownerRepository = ownerRepository;
             _pigeonRepository = pigeonRepository;
-            _ownerSerializer = ownerSerializer;
+            _veniraOwnerProvider = veniraOwnerProvider;
+            _appSettings = appSettings;
         }
 
-        public async Task<IEnumerable<Owner>> ReadOwnersFromFileAsync()
-        {
-            (StreamReader? stream, string fileName) = await _filePicker.OpenFileAsync([".udp"]);
-            if (stream is null)
-                return [];
-
-            return await _ownerSerializer.DeserializeAsync(stream);
-        }
+        public Task<IEnumerable<Owner>> ReadOwnersFromVeniraAsync() =>
+            _veniraOwnerProvider.GetOwnersAsync(ClubId.Create(_appSettings.Value.Club));
 
         public async Task<IEnumerable<Owner>> GetOwnersWithAllPigeonsAsync()
         {

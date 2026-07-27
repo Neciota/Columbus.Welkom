@@ -2,69 +2,58 @@
 using Columbus.Models.Owner;
 using Columbus.Models.Pigeon;
 using Columbus.Models.Race;
-using Columbus.UDP.Interfaces;
 using Columbus.Welkom.Application.Models.Entities;
 using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Providers;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
+using Columbus.Welkom.Application.Venira;
 using Microsoft.Extensions.Options;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace Columbus.Welkom.Application.Services
 {
     public class RaceService : IRaceService
     {
-        private readonly IFilePicker _filePicker;
         private readonly IOwnerRepository _ownerRepository;
         private readonly IPigeonRepository _pigeonRepository;
         private readonly IPigeonRaceRepository _pigeonRaceRepository;
         private readonly IRaceRepository _raceRepository;
-        private readonly IRaceSerializer _raceSerializer;
+        private readonly IVeniraRaceProvider _veniraRaceProvider;
+        private readonly ISolarPeriodProvider _solarPeriodProvider;
         private readonly SettingsProvider _settingsProvider;
         private readonly IOptions<AppSettings> _appSettings;
 
         public RaceService(
-            IFilePicker filePicker, 
-            IOwnerRepository ownerRepository, 
-            IPigeonRepository pigeonRepository, 
-            IPigeonRaceRepository pigeonRaceRepository, 
-            IRaceRepository raceRepository, 
-            IRaceSerializer raceSerializer,
+            IOwnerRepository ownerRepository,
+            IPigeonRepository pigeonRepository,
+            IPigeonRaceRepository pigeonRaceRepository,
+            IRaceRepository raceRepository,
+            IVeniraRaceProvider veniraRaceProvider,
+            ISolarPeriodProvider solarPeriodProvider,
             SettingsProvider settingsProvider,
             IOptions<AppSettings> appSettings)
         {
-            _filePicker = filePicker;
             _ownerRepository = ownerRepository;
             _pigeonRepository = pigeonRepository;
             _pigeonRaceRepository = pigeonRaceRepository;
             _raceRepository = raceRepository;
-            _raceSerializer = raceSerializer;
+            _veniraRaceProvider = veniraRaceProvider;
+            _solarPeriodProvider = solarPeriodProvider;
             _settingsProvider = settingsProvider;
             _appSettings = appSettings;
         }
 
-        public async Task<Race?> ReadRaceAsync()
+        public Task<IEnumerable<Race>> ReadRacesFromVeniraAsync() =>
+            _veniraRaceProvider.GetRacesAsync(_appSettings.Value.Year, ClubId.Create(_appSettings.Value.Club));
+
+        public async Task SyncRacesAsync(IEnumerable<Race> races)
         {
-            (StreamReader? streamReader, string fileName) = await _filePicker.OpenFileAsync([".udp"]);
-            if (streamReader is null)
-                return null;
-
-            RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
-            Dictionary<RaceType, INeutralizationTime> neutralizationTimes = raceSettings.GetNeutralizationTimesByRaceType(_appSettings.Value.Year);
-
-            return await _raceSerializer.DeserializeAsync(streamReader, neutralizationTimes[RaceType.Create(fileName[1])]);
-        }
-
-        public async Task<IEnumerable<Race>> ReadRacesAsync()
-        {
-            IEnumerable<(StreamReader StreamReader, string FileName)> files = await _filePicker.OpenFilesAsync([".udp"], new Regex(@"W...[0-9]{4}.udp"));
-
-            RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
-            Dictionary<RaceType, INeutralizationTime> neutralizationTimes = raceSettings.GetNeutralizationTimesByRaceType(_appSettings.Value.Year);
-
-            return await Task.WhenAll(files.AsParallel().Select(s => _raceSerializer.DeserializeAsync(s.StreamReader, neutralizationTimes[RaceType.Create(s.FileName[1])])));
+            // StoreRaceAsync is a no-op for races that are already stored, so this only adds.
+            foreach (Race race in races.OrderBy(r => r.Number))
+            {
+                await StoreRaceAsync(race);
+            }
         }
 
         public async Task<IEnumerable<SimpleRace>> GetAllRacesAsync()
@@ -185,7 +174,9 @@ namespace Columbus.Welkom.Application.Services
 
             RaceSettings settings = await _settingsProvider.GetSettingsAsync();
             RacePointsSettings racePointsSettings = settings.RacePointsSettings.FirstOrDefault(rps => rps.RaceType == race.Type, new());
-            INeutralizationTime neutralizationTime = settings.GetNeutralizationTimeForRaceType(race.Type, _appSettings.Value.Year);
+            INeutralizationTime neutralizationTime = settings.GetNeutralizationTimeForRaceType(
+                race.Type,
+                await _solarPeriodProvider.GetSolarPeriodsAsync(_appSettings.Value.Year));
 
             return race.ToRace(racePointsSettings.PointsQuotient, racePointsSettings.MaxPoints, racePointsSettings.MinPoints, racePointsSettings.DecimalCount, neutralizationTime);
         }
