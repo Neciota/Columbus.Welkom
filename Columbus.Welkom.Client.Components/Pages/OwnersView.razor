@@ -1,7 +1,7 @@
 ﻿@page "/"
-@using Columbus.UDP.Interfaces;
 @using Columbus.Welkom.Application.Providers
 @using Columbus.Welkom.Application.Services.Interfaces
+@using Columbus.Welkom.Application.Venira
 @inject NotificationService NotificationService
 @inject IOwnerService OwnerService
 
@@ -10,12 +10,12 @@
         Leden
     </RadzenText>
 
-    <RadzenButton Text="Ledenbestand"
+    <RadzenButton Text="Leden inlezen"
                   ButtonStyle="ButtonStyle.Primary"
                   ButtonType="ButtonType.Button"
                   IsBusy="_isUploading"
-                  Icon="upload_file"
-                  Click="ReadFile" />
+                  Icon="sync"
+                  Click="ReadOwners" />
 
     <RadzenDataGrid Data="_owners" EmptyText="Geen leden gevonden." IsLoading="_isLoading">
         <Columns>
@@ -49,17 +49,17 @@
         _isLoading = false;
     }
 
-    private async Task ReadFile()
+    private async Task ReadOwners()
     {
         _isUploading = true;
         try
         {
-            _owners = await OwnerService.ReadOwnersFromFileAsync();
+            _owners = await OwnerService.ReadOwnersFromVeniraAsync();
             await OwnerService.UpdateOwnersAsync(_owners);
         }
-        catch (JSException)
+        catch (VeniraException e)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Fout", "Bestand kon niet worden geladen.");
+            NotificationService.Notify(NotificationSeverity.Error, "Fout", e.Message, 10000);
             return;
         } finally
         {

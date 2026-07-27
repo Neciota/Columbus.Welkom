@@ -1,4 +1,4 @@
-﻿using Columbus.Models;
+using Columbus.Models;
 using Columbus.Models.Pigeon;
 using Columbus.Models.Race;
 using Columbus.Welkom.Application.Export;
@@ -8,6 +8,7 @@ using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Providers;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
+using Columbus.Welkom.Application.Venira;
 using Microsoft.Extensions.Options;
 using QuestPDF.Fluent;
 
@@ -21,14 +22,16 @@ namespace Columbus.Welkom.Application.Services
         private readonly SettingsProvider _settingsProvider;
         private readonly IOptions<AppSettings> _appSettings;
         private readonly IFilePicker _filePicker;
+        private readonly ISolarPeriodProvider _solarPeriodProvider;
 
         public SelectedYearPigeonService(
-            IPigeonRepository pigeonRepository, 
-            IRaceRepository raceRepository, 
+            IPigeonRepository pigeonRepository,
+            IRaceRepository raceRepository,
             ISelectedYearPigeonRepository selectedYearPigeonRepository,
             SettingsProvider settingsProvider,
-            IOptions<AppSettings> appSettings, 
-            IFilePicker filePicker)
+            IOptions<AppSettings> appSettings,
+            IFilePicker filePicker,
+            ISolarPeriodProvider solarPeriodProvider)
         {
             _pigeonRepository = pigeonRepository;
             _raceRepository = raceRepository;
@@ -36,6 +39,7 @@ namespace Columbus.Welkom.Application.Services
             _settingsProvider = settingsProvider;
             _appSettings = appSettings;
             _filePicker = filePicker;
+            _solarPeriodProvider = solarPeriodProvider;
         }
 
         public async Task<IEnumerable<OwnerPigeonPair>> GetOwnerPigeonPairsAsync()
@@ -43,7 +47,7 @@ namespace Columbus.Welkom.Application.Services
             IEnumerable<SelectedYearPigeonEntity> selectedYearPigeonEntities = await _selectedYearPigeonRepository.GetAllAsync();
             RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
             Dictionary<RaceType, RacePointsSettings> racePointsSettingsByRaceType = raceSettings.RacePointsSettings.ToDictionary(rps => rps.RaceType);
-            Dictionary<RaceType, INeutralizationTime> neutralizationTimesByRaceType = raceSettings.GetNeutralizationTimesByRaceType(_appSettings.Value.Year);
+            Dictionary<RaceType, INeutralizationTime> neutralizationTimesByRaceType = raceSettings.GetNeutralizationTimesByRaceType(await _solarPeriodProvider.GetSolarPeriodsAsync(_appSettings.Value.Year));
 
             IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync(raceSettings.AppliedRaceTypes.SelectedYearPigeonRaceTypes.ToArray());
             IEnumerable<Race> races = raceEntities.Select(re => re.ToRace(
@@ -53,7 +57,9 @@ namespace Columbus.Welkom.Application.Services
                 racePointsSettingsByRaceType[re.Type].DecimalCount,
                 neutralizationTimesByRaceType[re.Type]));
 
-            List<OwnerPigeonPair> ownerPigeonPairs = selectedYearPigeonEntities.Select(syp => new OwnerPigeonPair(syp.Owner!.ToOwner(), syp.Pigeon!.ToPigeon()))
+            // The Id must be carried across: the view treats Id 0 as an unsaved row, and both
+            // deleting and updating a pair look the entity up by it.
+            List<OwnerPigeonPair> ownerPigeonPairs = selectedYearPigeonEntities.Select(syp => new OwnerPigeonPair(syp.Owner!.ToOwner(), syp.Pigeon!.ToPigeon()) { Id = syp.Id })
                 .ToList();
 
             foreach (Race race in races)

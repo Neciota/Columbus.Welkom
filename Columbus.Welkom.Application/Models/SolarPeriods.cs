@@ -6,6 +6,8 @@ public static class SolarPeriods
     {
         return year switch
         {
+            // TBD by NPO?
+            2026 => GetSolarPeriodsFor2025(),
             2025 => GetSolarPeriodsFor2025(),
             2024 => GetSolarPeriodsFor2024(),
             2023 => GetSolarPeriodsFor2023(),

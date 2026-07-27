@@ -1,4 +1,4 @@
-﻿using Columbus.Models;
+using Columbus.Models;
 using Columbus.Models.Pigeon;
 using Columbus.Models.Race;
 using Columbus.Welkom.Application.Export;
@@ -7,6 +7,7 @@ using Columbus.Welkom.Application.Models.ViewModels;
 using Columbus.Welkom.Application.Providers;
 using Columbus.Welkom.Application.Repositories.Interfaces;
 using Columbus.Welkom.Application.Services.Interfaces;
+using Columbus.Welkom.Application.Venira;
 using Microsoft.Extensions.Options;
 
 namespace Columbus.Welkom.Application.Services
@@ -19,14 +20,16 @@ namespace Columbus.Welkom.Application.Services
         private readonly IRaceRepository _raceRepository;
         private readonly SettingsProvider _settingsProvider;
         private readonly IOptions<AppSettings> _appSettings;
+        private readonly ISolarPeriodProvider _solarPeriodProvider;
 
         public PigeonSwapService(
-            IFilePicker fileProvider, 
-            IPigeonRepository pigeonRepository, 
-            IPigeonSwapRepository pigeonSwapRepository, 
+            IFilePicker fileProvider,
+            IPigeonRepository pigeonRepository,
+            IPigeonSwapRepository pigeonSwapRepository,
             IRaceRepository raceRepository,
             SettingsProvider settingsProvider,
-            IOptions<AppSettings> appSettings)
+            IOptions<AppSettings> appSettings,
+            ISolarPeriodProvider solarPeriodProvider)
         {
             _filePicker = fileProvider;
             _pigeonRepository = pigeonRepository;
@@ -34,6 +37,7 @@ namespace Columbus.Welkom.Application.Services
             _raceRepository = raceRepository;
             _settingsProvider = settingsProvider;
             _appSettings = appSettings;
+            _solarPeriodProvider = solarPeriodProvider;
         }
 
         public async Task<IEnumerable<PigeonSwapPair>> GetPigeonSwapPairsAsync()
@@ -43,7 +47,7 @@ namespace Columbus.Welkom.Application.Services
             RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
             Dictionary<RaceType, RacePointsSettings> pointSettingsByRaceType = raceSettings.RacePointsSettings.ToDictionary(rps => rps.RaceType);
             Dictionary<RaceType, RaceTypeDescription> raceTypeDescriptionsByRaceType = raceSettings.RaceTypeDescriptions.ToDictionary(rtd => rtd.RaceType);
-            Dictionary<RaceType, INeutralizationTime> neutralizationTimesByRaceType = raceSettings.GetNeutralizationTimesByRaceType(_appSettings.Value.Year);
+            Dictionary<RaceType, INeutralizationTime> neutralizationTimesByRaceType = raceSettings.GetNeutralizationTimesByRaceType(await _solarPeriodProvider.GetSolarPeriodsAsync(_appSettings.Value.Year));
 
             IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync(raceSettings.AppliedRaceTypes.PigeonSwapRaceTypes.ToArray());
             IEnumerable<Race> races = raceEntities.Select(r => r.ToRace(
