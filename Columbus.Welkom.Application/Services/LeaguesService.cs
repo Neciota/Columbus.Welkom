@@ -15,7 +15,6 @@ namespace Columbus.Welkom.Application.Services
     public class LeaguesService : ILeaguesService
     {
         private readonly ILeagueRepository _leagueRepository;
-        private readonly ILeagueOwnerRepository _leagueOwnerRepository;
         private readonly IRaceRepository _raceRepository;
         private readonly SettingsProvider _settingsProvider;
         private readonly IOptions<AppSettings> _appSettings;
@@ -23,7 +22,6 @@ namespace Columbus.Welkom.Application.Services
         private readonly ISolarPeriodProvider _solarPeriodProvider;
 
         public LeaguesService(ILeagueRepository leagueRepository,
-            ILeagueOwnerRepository leagueOwnerRepository,
             IRaceRepository raceRepository,
             SettingsProvider settingsProvider,
             IOptions<AppSettings> appSettings,
@@ -31,7 +29,6 @@ namespace Columbus.Welkom.Application.Services
             ISolarPeriodProvider solarPeriodProvider)
         {
             _leagueRepository = leagueRepository;
-            _leagueOwnerRepository = leagueOwnerRepository;
             _raceRepository = raceRepository;
             _settingsProvider = settingsProvider;
             _appSettings = appSettings;
@@ -96,21 +93,22 @@ namespace Columbus.Welkom.Application.Services
 
         public async Task UpdateLeagueAsync(League league)
         {
-            LeagueEntity? existingLeague = await _leagueRepository.GetByRankAsync(league.Rank);
-            if (existingLeague is null)
-                throw new ArgumentException("League does not exist.");
             if (league.LeagueOwners.Any(lo => lo.Owner is null))
                 throw new ArgumentException("Owner is not set for an entry.");
 
-            existingLeague.Name = league.Name;
+            LeagueEntity leagueToUpdate = new()
+            {
+                Rank = league.Rank,
+                Name = league.Name,
+                LeagueOwners = league.LeagueOwners.Select(lo => new LeagueOwnerEntity
+                {
+                    LeagueRank = league.Rank,
+                    OwnerId = lo.Owner!.Id,
+                }).ToList(),
+            };
 
-            IEnumerable<LeagueOwnerEntity> leagueOwnersToAdd = league.LeagueOwners.ExceptBy(existingLeague.LeagueOwners.Select(lo => lo.OwnerId), lo => lo.Owner!.Id)
-                .Select(lo => new LeagueOwnerEntity { LeagueRank = league.Rank, OwnerId = lo.Owner!.Id });
-            IEnumerable<LeagueOwnerEntity> leagueOwnersToDelete = existingLeague.LeagueOwners.ExceptBy(league.LeagueOwners.Select(lo => lo.Owner!.Id), lo => lo.OwnerId);
-
-            await _leagueOwnerRepository.AddRangeAsync(leagueOwnersToAdd);
-            await _leagueOwnerRepository.DeleteRangeAsync(leagueOwnersToDelete);
-            await _leagueRepository.UpdateAsync(existingLeague);
+            if (!await _leagueRepository.UpdateWithOwnersAsync(leagueToUpdate))
+                throw new ArgumentException("League does not exist.");
         }
 
         public async Task DeleteLeagueAsync(League league)

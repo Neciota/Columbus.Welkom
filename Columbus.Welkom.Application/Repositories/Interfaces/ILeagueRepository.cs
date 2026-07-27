@@ -6,4 +6,5 @@ public interface ILeagueRepository : IBaseRepository<LeagueEntity>
 {
     Task<ICollection<LeagueEntity>> GetAllWithOwnersAsync();
     Task<LeagueEntity?> GetByRankAsync(int rank);
+    Task<bool> UpdateWithOwnersAsync(LeagueEntity league);
 }

@@ -76,6 +76,16 @@ public class TeamsService(
 
     public async Task UpdateTeamAsync(Team team)
     {
+        if (team.TeamOwners.Any(to => to.Owner is null))
+            throw new ArgumentException("Owner is not set for an entry.");
+
+        List<OwnerTeamEntity> teamOwners = team.TeamOwners.Select(to => new OwnerTeamEntity
+        {
+            OwnerId = to.Owner!.Id,
+            Position = to.Position,
+            TeamNumber = team.Number,
+        }).ToList();
+
         TeamEntity? existingTeam = await _teamsRepository.GetByNumberAsync(team.Number);
 
         if (existingTeam is null)
@@ -83,26 +93,14 @@ public class TeamsService(
             TeamEntity teamToAdd = new()
             {
                 Number = team.Number,
-                TeamOwners = team.TeamOwners.Select(to => new OwnerTeamEntity 
-                {
-                   OwnerId = to.Owner!.Id,
-                   Position = to.Position,
-                }).ToList(),
+                TeamOwners = teamOwners,
             };
 
             await _teamsRepository.AddAsync(teamToAdd);
         }
         else
         {
-            if (team.TeamOwners.Any(to => to.Owner is null))
-                throw new ArgumentException("Owner is not set for an entry.");
-
-            IEnumerable<OwnerTeamEntity> teamOwnersToAdd = team.TeamOwners.ExceptBy(existingTeam.TeamOwners.Select(to => to.OwnerId), to => to.Owner!.Id)
-                .Select(to => new OwnerTeamEntity { OwnerId = to.Owner!.Id, Position = to.Position, TeamNumber = team.Number });
-            IEnumerable<OwnerTeamEntity> teamOwnersToKeep = existingTeam.TeamOwners.IntersectBy(team.TeamOwners.Select(to => to.Owner!.Id), to => to.OwnerId);
-
-            existingTeam.TeamOwners = teamOwnersToKeep.Concat(teamOwnersToAdd).ToList();
-            await _teamsRepository.UpdateAsync(existingTeam);
+            await _teamsRepository.SetTeamOwnersAsync(team.Number, teamOwners);
         }
     }
 

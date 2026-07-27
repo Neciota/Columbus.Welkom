@@ -6,4 +6,5 @@ public interface ITeamsRepository : IBaseRepository<TeamEntity>
 {
     Task<ICollection<TeamEntity>> GetAllWithTeamOwnersAync();
     Task<TeamEntity?> GetByNumberAsync(int number);
+    Task SetTeamOwnersAsync(int teamNumber, IEnumerable<OwnerTeamEntity> teamOwners);
 }
