@@ -120,7 +120,7 @@ public class VeniraRaceProvider(IVeniraReader reader) : IVeniraRaceProvider
             number,
             raceType,
             flight.ReleaseSite ?? string.Empty,
-            BuildCode(raceType, number),
+            BuildCode(flight, raceType, number),
             startTime,
             location,
             ownerRaces,
@@ -164,12 +164,21 @@ public class VeniraRaceProvider(IVeniraReader reader) : IVeniraRaceProvider
     }
 
     /// <summary>
-    /// The race's key, e.g. <c>V07</c> for Vitesse number 7. Venira numbers flights
-    /// sequentially across the whole season regardless of race type, so this is unique within a
-    /// year — and each database already covers a single club and year.
+    /// The race's key: Venira's own flight code, e.g. <c>L32</c>, so that a race is keyed on the
+    /// same code Venira shows it under. It is unique within a season, and each database already
+    /// covers a single club and year.
     /// </summary>
-    private static string BuildCode(RaceType raceType, short number) =>
-        string.Create(CultureInfo.InvariantCulture, $"{raceType}{number:00}");
+    /// <remarks>
+    /// Venira has always filled <c>Vluchtcode</c> in practice; the fall-back only exists because
+    /// the code is a primary key and an empty one would collide with every other codeless flight.
+    /// It combines the race type with the flight number, e.g. <c>V07</c> for Vitesse number 7,
+    /// which is unique for the same reason — Venira numbers flights sequentially across the whole
+    /// season regardless of race type.
+    /// </remarks>
+    private static string BuildCode(VeniraFlightRow flight, RaceType raceType, short number) =>
+        string.IsNullOrWhiteSpace(flight.Code)
+            ? string.Create(CultureInfo.InvariantCulture, $"{raceType}{number:00}")
+            : flight.Code.Trim();
 
     private static Owner? ToOwner(VeniraOwnerRow row)
     {
