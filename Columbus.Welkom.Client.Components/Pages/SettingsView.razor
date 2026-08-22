@@ -2,6 +2,7 @@
 @using Columbus.Welkom.Application.Models.ViewModels
 @inject IOptions<AppSettings> Settings
 @inject ISettingService SettingService
+@inject IRaceService RaceService
 
 <RadzenRow>
     <RadzenColumn Size="12" SizeMD="6">
@@ -188,14 +189,16 @@
 
                 <RadzenRow AlignItems="AlignItems.Center">
                     <RadzenColumn Size="12" SizeMD="6">
-                        Duivenverkoop
+                        Duivenverkoop (vluchtcode)
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenDropDown Data="RaceTypes"
-                                        @bind-Value="_settings.AppliedRaceTypes.PigeonSaleRaceTypes"
+                        <RadzenDropDown Data="_raceCodeLetters"
+                                        @bind-Value="_settings.AppliedRaceTypes.PigeonSaleCodeLetters"
+                                        TextProperty="@nameof(RaceCodeLetter.Label)"
+                                        ValueProperty="@nameof(RaceCodeLetter.Letter)"
                                         Multiple="true"
                                         Separator=", "
-                                        MaxSelectedLabels="RaceTypes.Count() + 1"
+                                        MaxSelectedLabels="_raceCodeLetters.Count + 1"
                                         Change="SaveSettingsAsync"
                                         class="rz-w-100" />
                     </RadzenColumn>
@@ -277,6 +280,11 @@
     private RaceTypeDescription _newRaceType = new();
 
     private RacePointsSettings _racePointsSettings = new();
+
+    // Read from the imported races rather than configured, because the flight code is Venira's
+    // own and only the races reveal which letters a season uses.
+    private List<RaceCodeLetter> _raceCodeLetters = [];
+
     private IEnumerable<RaceType> RaceTypes => _settings.RaceTypeDescriptions.Select(rtd => rtd.RaceType);
     private IEnumerable<int> RemainingRaceTypes => Enumerable.Range('A', 'Z' - 'A' + 1)
         .ExceptBy(_settings.RaceTypeDescriptions.Select(rtd => rtd.RaceType), v => RaceType.Create(Convert.ToChar((int)v)));
@@ -286,6 +294,7 @@
         await base.OnInitializedAsync();
 
         _settings = await SettingService.GetSettingsAsync();
+        _raceCodeLetters = [.. await RaceService.GetRaceCodeLettersAsync()];
         OnSelectedRaceTypeChange(0);
     }
 

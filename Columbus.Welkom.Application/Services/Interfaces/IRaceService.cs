@@ -8,6 +8,13 @@ namespace Columbus.Welkom.Application.Services.Interfaces
         Task DeleteRaceByCodeAsync(string code);
         Task<IEnumerable<SimpleRace>> GetAllRacesByTypeAsync(RaceType type);
         Task<IEnumerable<SimpleRace>> GetAllRacesAsync();
+
+        /// <summary>
+        /// The flight-code letters occurring in the stored races, for selecting races by code
+        /// rather than by race type.
+        /// </summary>
+        Task<IEnumerable<RaceCodeLetter>> GetRaceCodeLettersAsync();
+
         Task<Race> GetRaceByCodeAsync(string code);
         Task OverwriteRacesAsync(IEnumerable<Race> races);
 

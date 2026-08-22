@@ -63,6 +63,9 @@ namespace Columbus.Welkom.Application.Services
             return races.Select(r => r.ToSimpleRace()).ToList();
         }
 
+        public async Task<IEnumerable<RaceCodeLetter>> GetRaceCodeLettersAsync() =>
+            await _raceRepository.GetCodeLettersAsync();
+
         public async Task<IEnumerable<SimpleRace>> GetAllRacesByTypeAsync(RaceType type)
         {
             IEnumerable<SimpleRaceEntity> races = await _raceRepository.GetAllSimpleByTypesAsync([type]);

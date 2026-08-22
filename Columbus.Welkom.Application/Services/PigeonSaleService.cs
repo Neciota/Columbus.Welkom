@@ -77,15 +77,26 @@ public class PigeonSaleService(
 
         RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
         Dictionary<RaceType, RacePointsSettings> racePointsSettingsByRaceType = raceSettings.RacePointsSettings.ToDictionary(rps => rps.RaceType);
-        Dictionary<RaceType, INeutralizationTime> neutralizationTimesByRaceType = raceSettings.GetNeutralizationTimesByRaceType(await _solarPeriodProvider.GetSolarPeriodsAsync(_appSettings.Value.Year));
+        Dictionary<DateOnly, (DateTime SunUp, DateTime SunDown)> solarPeriods = await _solarPeriodProvider.GetSolarPeriodsAsync(_appSettings.Value.Year);
 
-        IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByTypesAsync(raceSettings.AppliedRaceTypes.PigeonSaleRaceTypes.ToArray());
-        IEnumerable<Race> races = raceEntities.Select(re => re.ToRace(
-            racePointsSettingsByRaceType[re.Type].PointsQuotient,
-            racePointsSettingsByRaceType[re.Type].MaxPoints,
-            racePointsSettingsByRaceType[re.Type].MinPoints,
-            racePointsSettingsByRaceType[re.Type].DecimalCount,
-            neutralizationTimesByRaceType[re.Type]));
+        IEnumerable<RaceEntity> raceEntities = await _raceRepository.GetAllByCodeLettersAsync(raceSettings.AppliedRaceTypes.PigeonSaleCodeLetters.ToArray());
+
+        // Selecting on the flight code can reach a race whose type has no points settings of its
+        // own, unlike a selection made from the configured race types. That is harmless here:
+        // GetRacePointsFromRace awards its own points and only relies on the arrival order that
+        // ToRace sorts on, so unconfigured types fall back to a zeroed settings object.
+        List<Race> races = [.. raceEntities.Select(re =>
+        {
+            RacePointsSettings pointsSettings = racePointsSettingsByRaceType.GetValueOrDefault(re.Type)
+                ?? new RacePointsSettings { RaceType = re.Type };
+
+            return re.ToRace(
+                pointsSettings.PointsQuotient,
+                pointsSettings.MaxPoints,
+                pointsSettings.MinPoints,
+                pointsSettings.DecimalCount,
+                raceSettings.GetNeutralizationTimeForRaceType(re.Type, solarPeriods));
+        })];
 
         Dictionary<PigeonId, IEnumerable<RacePoints>> racePointsByPigeon = pigeonSaleClasses.SelectMany(psc => races.SelectMany(r => GetRacePointsFromRace(pigeonsIdsInCompetitionByClass[psc.Id], r)))
             .GroupBy(prp => prp.PigeonId)
@@ -156,7 +167,7 @@ public class PigeonSaleService(
     public async Task<ICollection<SimpleRace>> GetRacesAsync()
     {
         RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
-        ICollection<SimpleRaceEntity> races = await _raceRepository.GetAllSimpleByTypesAsync(raceSettings.AppliedRaceTypes.PigeonSaleRaceTypes.ToArray());
+        ICollection<SimpleRaceEntity> races = await _raceRepository.GetAllSimpleByCodeLettersAsync(raceSettings.AppliedRaceTypes.PigeonSaleCodeLetters.ToArray());
 
         return races.Select(r => r.ToSimpleRace())
             .OrderByDescending(r => r.StartTime)
