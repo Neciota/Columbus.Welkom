@@ -7,7 +7,7 @@
         Duivenverkoop
     </RadzenText>
 
-    <RadzenStack Orientation="Orientation.Horizontal">
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
         <RadzenButton ButtonStyle="ButtonStyle.Primary"
                       Text="Klassement toevoegen"
                       Icon="playlist_add"
@@ -19,7 +19,29 @@
                       IsBusy="_isExporting"
                       Click="ExportAsync"
                       Disabled="_isLoading" />
+
+        <RadzenDropDown Data="_raceOptions"
+                        @bind-Value="_selectedRaceCode"
+                        TValue="string"
+                        TextProperty="@nameof(RaceOption.Display)"
+                        ValueProperty="@nameof(RaceOption.Code)"
+                        AllowFiltering="true"
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                        AllowClear="true"
+                        Placeholder="Kies een vlucht"
+                        Disabled="_isLoading"
+                        Style="min-width: 260px;" />
+        <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                      Text="Vlucht exporteren"
+                      Icon="file_save"
+                      IsBusy="_isExportingRace"
+                      Click="ExportRaceAsync"
+                      Disabled="_isLoading || _selectedRaceCode is null" />
     </RadzenStack>
+
+    <RadzenText TextStyle="TextStyle.Body1" Visible="!_races.Any() && !_isLoading">
+        Er zijn geen vluchten voor de duivenverkoop. Stel de vluchtsoorten in bij Instellingen.
+    </RadzenText>
 
     <RadzenText TextStyle="TextStyle.Body1" Visible="!_pigeonSaleClasses.Any() && !_isLoading">
         Er zijn geen verkoopklassementen aanwezig.
@@ -153,8 +175,12 @@
     private ICollection<PigeonSaleClass> _pigeonSaleClasses = [];
     private Dictionary<int, RadzenDataGrid<PigeonSale>> _dataGridsByPigeonSaleClassId = [];
     private PigeonSaleClass? _pigeonSaleClassToEdit = null;
+    private ICollection<SimpleRace> _races = [];
+    private ICollection<RaceOption> _raceOptions = [];
+    private string? _selectedRaceCode = null;
     private bool _isLoading = false;
     private bool _isExporting = false;
+    private bool _isExportingRace = false;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -166,7 +192,11 @@
         {
             _allOwners = await OwnerService.GetOwnersWithYearPigeonsAsync(Year);
             _pigeonSaleClasses = await PigeonSaleService.GetAllClassesAsync();
+            _races = await PigeonSaleService.GetRacesAsync();
         });
+
+        _raceOptions = _races.Select(r => new RaceOption(r.Code, $"{r.Name} - {r.StartTime:dd-MM-yyyy}")).ToList();
+        _selectedRaceCode ??= _raceOptions.FirstOrDefault()?.Code;
 
         _isLoading = false;
     }
@@ -244,4 +274,19 @@
 
         _isExporting = false;
     }
+
+    private async Task ExportRaceAsync()
+    {
+        SimpleRace? race = _races.FirstOrDefault(r => r.Code == _selectedRaceCode);
+        if (race is null)
+            return;
+
+        _isExportingRace = true;
+
+        await PigeonSaleService.ExportRaceAsync(_pigeonSaleClasses, race);
+
+        _isExportingRace = false;
+    }
+
+    private sealed record RaceOption(string Code, string Display);
 }

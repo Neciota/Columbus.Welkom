@@ -10,7 +10,9 @@ public class PigeonSaleDocument(PigeonSales pigeonSales) : BaseDocument(pigeonSa
 {
     private readonly PigeonSales _pigeonSales = pigeonSales;
 
-    protected override string Title => "Duivenverkoop";
+    protected override string Title => _pigeonSales.SelectedRace is null
+        ? "Duivenverkoop"
+        : $"Duivenverkoop {_pigeonSales.SelectedRace.Name}";
 
     protected override PageSize PageSize => PageSizes.A4.Landscape();
 
@@ -52,7 +54,7 @@ public class PigeonSaleDocument(PigeonSales pigeonSales) : BaseDocument(pigeonSa
                         });
 
                         int position = 0;
-                        foreach (PigeonSale pigeonSale in pigeonSaleClass.PigeonSales.OrderByDescending(to => to.TotalPoints))
+                        foreach (PigeonSale pigeonSale in OrderPigeonSales(pigeonSaleClass.PigeonSales))
                         {
                             position++;
                             table.Cell().Text($"{position}.").LineHeight(1.5f);
@@ -61,7 +63,7 @@ public class PigeonSaleDocument(PigeonSales pigeonSales) : BaseDocument(pigeonSa
                             table.Cell().Text(pigeonSale.Pigeon?.Id.ToString()).LineHeight(1.5f);
                             foreach (SimpleRace simpleRace in _pigeonSales.Races)
                             {
-                                table.Cell().Text((pigeonSale.RacePoints.FirstOrDefault(rp => rp.RaceCode == simpleRace.Code)?.Points ?? 0d).ToString("N0")).LineHeight(1.5f);
+                                table.Cell().Text(GetPoints(pigeonSale, simpleRace).ToString("N0")).LineHeight(1.5f);
                             }
                             table.Cell().Text(pigeonSale.TotalPoints.ToString("N0")).LineHeight(1.5f);
                         }
@@ -70,4 +72,20 @@ public class PigeonSaleDocument(PigeonSales pigeonSales) : BaseDocument(pigeonSa
             });
         });
     }
+
+    /// <summary>
+    /// Ranks on the points of the selected race when the document covers a single race, falling back to the
+    /// overall total to break ties. Ranks on the overall total otherwise.
+    /// </summary>
+    private IEnumerable<PigeonSale> OrderPigeonSales(IEnumerable<PigeonSale> pigeonSales)
+    {
+        if (_pigeonSales.SelectedRace is null)
+            return pigeonSales.OrderByDescending(ps => ps.TotalPoints);
+
+        return pigeonSales.OrderByDescending(ps => GetPoints(ps, _pigeonSales.SelectedRace))
+            .ThenByDescending(ps => ps.TotalPoints);
+    }
+
+    private static double GetPoints(PigeonSale pigeonSale, SimpleRace race) =>
+        pigeonSale.RacePoints.FirstOrDefault(rp => rp.RaceCode == race.Code)?.Points ?? 0d;
 }

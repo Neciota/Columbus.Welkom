@@ -153,19 +153,45 @@ public class PigeonSaleService(
         }
     }
 
-    public async Task ExportAsync(IEnumerable<PigeonSaleClass> pigeonSaleClasses)
+    public async Task<ICollection<SimpleRace>> GetRacesAsync()
     {
-        RaceEntity mostRecentRace = await _raceRepository.GetMostRecentRaceAsync();
-
         RaceSettings raceSettings = await _settingsProvider.GetSettingsAsync();
         ICollection<SimpleRaceEntity> races = await _raceRepository.GetAllSimpleByTypesAsync(raceSettings.AppliedRaceTypes.PigeonSaleRaceTypes.ToArray());
+
+        return races.Select(r => r.ToSimpleRace())
+            .OrderByDescending(r => r.StartTime)
+            .ToList();
+    }
+
+    public async Task ExportAsync(IEnumerable<PigeonSaleClass> pigeonSaleClasses)
+    {
+        ICollection<SimpleRace> races = await GetRacesAsync();
+
+        await ExportAsync(pigeonSaleClasses, races.OrderBy(r => r.StartTime).ToList(), null, "Duivenverkoop.pdf");
+    }
+
+    public async Task ExportRaceAsync(IEnumerable<PigeonSaleClass> pigeonSaleClasses, SimpleRace race)
+    {
+        string fileName = $"Duivenverkoop {race.Name}.pdf";
+        foreach (char invalidCharacter in Path.GetInvalidFileNameChars())
+        {
+            fileName = fileName.Replace(invalidCharacter, '_');
+        }
+
+        await ExportAsync(pigeonSaleClasses, [race], race, fileName);
+    }
+
+    private async Task ExportAsync(IEnumerable<PigeonSaleClass> pigeonSaleClasses, ICollection<SimpleRace> races, SimpleRace? selectedRace, string fileName)
+    {
+        RaceEntity mostRecentRace = await _raceRepository.GetMostRecentRaceAsync();
 
         PigeonSales documentPigeonSales = new()
         {
             ClubId = _appSettings.Value.Club,
             Year = _appSettings.Value.Year,
             PigeonSaleClasses = pigeonSaleClasses.ToList(),
-            Races = races.Select(r => r.ToSimpleRace()).ToList(),
+            Races = races,
+            SelectedRace = selectedRace,
             LastRaceName = mostRecentRace.Name,
             LastRaceDate = mostRecentRace.StartTime,
         };
@@ -173,6 +199,6 @@ public class PigeonSaleService(
         PigeonSaleDocument document = new(documentPigeonSales);
         byte[] pdf = document.GeneratePdf();
 
-        await _filePicker.SaveFileAsync("Duivenverkoop.pdf", new MemoryStream(pdf));
+        await _filePicker.SaveFileAsync(fileName, new MemoryStream(pdf));
     }
 }
